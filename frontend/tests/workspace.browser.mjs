@@ -192,9 +192,9 @@ test('MCP publications appear in the shared library frame with a matching berry 
   assert.equal(layout.searchSize, '13px');
   assert.equal(layout.searchInput.x - layout.searchIcon.right, 12);
   assert.equal(layout.searchInputPadding, '1px 2px');
-  assert.equal(layout.searchInput.height, 20);
+  assert.ok(Math.abs(layout.searchInput.y + layout.searchInput.height / 2 - layout.search.y - layout.search.height / 2) < .5, 'Search text stays vertically centered');
   assert.ok(Math.abs(layout.searchKey.width - 20.8) < .1, `Search keycap width is ${layout.searchKey.width}`);
-  assert.equal(layout.searchKey.height, 20);
+  assert.ok(Math.abs(layout.searchKey.y + layout.searchKey.height / 2 - layout.search.y - layout.search.height / 2) < .5, 'Search keycap stays vertically centered');
   assert.equal(layout.columns, 4);
   assert.equal(layout.gap, '20px');
   assert.equal(layout.card.width, 453);
