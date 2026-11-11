@@ -6,6 +6,8 @@
   "scripts": {
     "prepare": "node -e \"if (require('node:fs').existsSync('.git')) require('node:child_process').execFileSync('git', ['config', 'core.hooksPath', '.githooks'])\"",
     "start": "node scripts/dev.mjs",
+    "coder": "coder ssh --tty ari-pilot \"stty rows $(tput lines) cols $(tput cols) && exec opencode --standalone ~/ari\"",
+    "coder:verify": "bash .coder/verify.sh",
     "build": "npm --prefix frontend run build && cargo build --release",
     "test": "npm --prefix frontend run test && cargo test",
     "test:browser": "npm --prefix frontend run build && cargo build && node --test frontend/tests/*.browser.mjs",

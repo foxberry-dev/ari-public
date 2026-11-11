@@ -8,6 +8,8 @@ Hosted app: https://ari.foxberry.dev. Linux x86_64: [public installer](https://g
 
 Requires Node 24+ and a current Rust toolchain with a C compiler.
 
+Run `npm run coder` to open OpenCode in the Foxberry development workspace. Requires an authenticated local Coder CLI; see [the Coder template](.coder/README.md).
+
 ```sh
 npm start
 ```
