@@ -44,7 +44,7 @@ Ari starts with an empty library. Agents publish clarifications; users answer qu
 
 ## Checks
 
-Enable the pre-commit checks with `git config core.hooksPath .githooks`. OpenCode `/push` writes a conventional commit and pushes after the hook passes.
+`npm install` and `npm ci` enable the pre-commit hook automatically from the root or `frontend` package in a Git checkout. OpenCode `/push` writes a conventional commit and pushes after the hook passes. GitHub Actions builds and publishes releases and deployments; verification runs locally.
 
 ```sh
 npm --prefix frontend run build

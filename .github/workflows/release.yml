@@ -1,6 +1,5 @@
 name: Release
 on:
-  pull_request:
   push:
     branches: [main]
   workflow_dispatch:
@@ -10,7 +9,7 @@ concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  verify:
+  build:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -24,15 +23,14 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - name: Install Rust
         run: |
-          rustup toolchain install 1.96.0 --profile minimal --component clippy,rustfmt
+          rustup toolchain install 1.96.0 --profile minimal
           rustup default 1.96.0
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
-      - name: Install frontend dependencies and browser
+      - name: Build release executable
         run: |
           npm --prefix frontend ci
-          npm --prefix frontend exec -- playwright install --with-deps chromium
-      - name: Verify frontend, Rust, browser, and release build
-        run: sh .githooks/pre-commit
+          npm --prefix frontend run build
+          cargo build --locked --release
       - uses: actions/upload-artifact@v4
         with:
           name: ari-linux
@@ -40,7 +38,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
   deliver:
-    needs: verify
+    needs: build
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
