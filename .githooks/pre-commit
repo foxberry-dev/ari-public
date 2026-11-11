@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+npm --prefix frontend test
+npm --prefix frontend run build
+cargo fmt --all --check
+cargo clippy --locked --all-targets -- -D warnings
+cargo test --locked
+npm run test:browser
+cargo build --locked --release

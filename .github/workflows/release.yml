@@ -1,0 +1,72 @@
+name: Release
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install Rust
+        run: |
+          rustup toolchain install 1.96.0 --profile minimal --component clippy,rustfmt
+          rustup default 1.96.0
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6
+      - name: Install frontend dependencies and browser
+        run: |
+          npm --prefix frontend ci
+          npm --prefix frontend exec -- playwright install --with-deps chromium
+      - name: Verify frontend, Rust, browser, and release build
+        run: sh .githooks/pre-commit
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ari-linux
+          path: target/release/ari
+          if-no-files-found: error
+          retention-days: 7
+  deliver:
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: ari-linux
+          path: target/release
+      - run: chmod +x target/release/ari
+      - uses: actions/create-github-app-token@v2
+        id: delivery
+        with:
+          app-id: ${{ vars.FOXBERRY_APP_ID }}
+          private-key: ${{ secrets.FOXBERRY_APP_PRIVATE_KEY }}
+          owner: foxberry-dev
+          repositories: ari,downloads,foxberry-home
+          permission-contents: write
+      - uses: actions/checkout@v6
+        with:
+          repository: foxberry-dev/foxberry-home
+          token: ${{ steps.delivery.outputs.token }}
+          path: infrastructure
+      - name: Publish Linux downloads and deployment
+        env:
+          GH_TOKEN: ${{ steps.delivery.outputs.token }}
+        run: python3 infrastructure/scripts/studio-release.py ari

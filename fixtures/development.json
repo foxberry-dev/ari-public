@@ -1,0 +1,256 @@
+{
+  "clarifications": [
+    {
+      "id": "recipe-friday-curry",
+      "title": "Friday-night coconut curry",
+      "description": "Turn a flexible curry idea into a recipe: choose the servings, dietary constraints, protein, heat, and cooking method before setting the quantities.",
+      "questions": [
+        {
+          "id": "servings",
+          "title": "Who is eating?",
+          "question": "How many people should the curry feed, and do you want leftovers?",
+          "rationale": "Portions set the ingredient quantities and the pan size.",
+          "alternatives": [
+            { "label": "Two, no leftovers", "description": "A small batch for one dinner." },
+            { "label": "Two, plus tomorrow's lunch", "description": "Four portions with a second meal planned." },
+            { "label": "Six at the table", "description": "A larger batch that may need two pans." }
+          ]
+        },
+        {
+          "id": "diet",
+          "title": "Diet and allergies",
+          "question": "Does the meal need to be vegan, and are there allergies or ingredients to avoid?",
+          "rationale": "Curry paste can contain shrimp, and sauces or toppings can introduce allergens.",
+          "dependsOn": ["servings"],
+          "alternatives": [
+            { "label": "Vegan", "description": "Use plant-based protein and check the curry paste." },
+            { "label": "Vegetarian", "description": "Dairy and eggs are acceptable; fish and shrimp are not." },
+            { "label": "No dietary preference", "description": "Choose the protein freely, but still confirm allergies." }
+          ]
+        },
+        {
+          "id": "protein",
+          "title": "Main ingredient",
+          "question": "Which protein should anchor the curry once the dietary constraints are known?",
+          "rationale": "The protein changes the preparation, cooking sequence, and texture.",
+          "dependsOn": ["diet"],
+          "alternatives": [
+            { "label": "Chickpeas", "description": "Canned chickpeas make a low-preparation plant-based option." },
+            { "label": "Firm tofu", "description": "Pan-fry separately for a crisp surface." },
+            { "label": "Chicken", "description": "Requires handling raw poultry and checking that it is cooked safely." }
+          ]
+        },
+        {
+          "id": "heat",
+          "title": "How spicy?",
+          "question": "Should the base curry be mild for everyone, or should it carry the heat?",
+          "rationale": "Heat is easier to add at the table than remove from a finished pot.",
+          "dependsOn": ["diet"],
+          "alternatives": [
+            { "label": "Mild, chili on the side", "description": "Each diner adjusts their own plate." },
+            { "label": "Medium throughout", "description": "One consistent heat level for the whole pot." },
+            { "label": "Hot throughout", "description": "Choose only if every diner wants a spicy meal." }
+          ]
+        },
+        {
+          "id": "method",
+          "title": "Time and equipment",
+          "question": "How much active cooking time is available, and which pan or appliance will you use?",
+          "rationale": "A quick stovetop meal needs a different sequence from a mostly hands-off cook.",
+          "dependsOn": ["servings", "protein"],
+          "alternatives": [
+            { "label": "30-minute stovetop", "description": "Use one wide pan and ingredients that cook quickly." },
+            { "label": "60-minute relaxed cook", "description": "Allow time to brown the protein and roast vegetables separately." }
+          ]
+        },
+        {
+          "id": "recipe",
+          "title": "Write the final recipe",
+          "question": "What exact ingredients, quantities, steps, and serving plan fit the choices above?",
+          "rationale": "The final recipe should reconcile the portions, restrictions, heat, and available cooking time.",
+          "dependsOn": ["servings", "diet", "protein", "heat", "method"]
+        }
+      ]
+    },
+    {
+      "id": "shopping-cart-checkout",
+      "title": "Shopping cart: from basket to paid order",
+      "description": "Define the first release for a small online shop. Resolve identity, pricing, stock, shipping, and payment rules, then turn them into testable acceptance criteria.",
+      "questions": [
+        {
+          "id": "market",
+          "title": "Launch market",
+          "question": "Which countries and currencies must the first release support?",
+          "rationale": "The launch market affects taxes, payment methods, addresses, and shipping rules.",
+          "alternatives": [
+            { "label": "Netherlands, EUR", "description": "One launch country with a narrow operational scope." },
+            { "label": "EU, EUR only", "description": "More destination and tax cases without currency conversion." },
+            { "label": "Multiple currencies", "description": "Requires explicit exchange-rate and settlement rules." }
+          ]
+        },
+        {
+          "id": "catalog",
+          "title": "Physical products only?",
+          "question": "Can the first release assume every sellable item is a physical product with a stock count?",
+          "rationale": "Digital products, subscriptions, and preorders need different fulfillment and availability rules.",
+          "assumption": true,
+          "alternatives": [
+            { "label": "Physical stock only", "description": "Every order requires shipping and available inventory." },
+            { "label": "Physical and digital", "description": "Mixed carts need fulfillment rules per line." },
+            { "label": "Include preorders", "description": "Availability and promised delivery dates become separate concepts." }
+          ]
+        },
+        {
+          "id": "identity",
+          "title": "Guest checkout",
+          "question": "Must customers create an account before they can pay?",
+          "rationale": "Identity rules affect conversion, saved carts, order lookup, and personal-data handling.",
+          "alternatives": [
+            { "label": "Guest or account", "description": "Support checkout without registration and optional saved details." },
+            { "label": "Account required", "description": "One identity model with a mandatory registration step." },
+            { "label": "Guest only at launch", "description": "Avoid account features while defining secure order lookup." }
+          ]
+        },
+        {
+          "id": "persistence",
+          "title": "Cart lifetime and merging",
+          "question": "How long should carts survive, and what happens when a guest with a cart signs in?",
+          "rationale": "Merging can create duplicate lines, exceed stock, or revive expired prices.",
+          "dependsOn": ["identity"],
+          "alternatives": [
+            { "label": "Keep this device's cart", "description": "Use the current cart after sign-in; explain what happens to the saved cart." },
+            { "label": "Merge quantities", "description": "Combine matching variants and revalidate stock and prices." },
+            { "label": "Ask the customer", "description": "Make the conflict visible before replacing either cart." }
+          ]
+        },
+        {
+          "id": "stock",
+          "title": "Inventory reservation",
+          "question": "When, if ever, should adding an item reserve stock for the customer?",
+          "rationale": "Reservations trade fewer checkout surprises for stock held by shoppers who may never pay.",
+          "dependsOn": ["catalog", "persistence"],
+          "alternatives": [
+            { "label": "Validate at checkout", "description": "A cart does not reserve inventory; availability may change." },
+            { "label": "Reserve during payment", "description": "Hold inventory briefly and define expiry and release behavior." },
+            { "label": "Reserve on add", "description": "Define a visible hold timer and protect against stock hoarding." }
+          ]
+        },
+        {
+          "id": "pricing",
+          "title": "Price changes and discounts",
+          "question": "Which price is binding, and can customers combine promotional codes with sale prices?",
+          "rationale": "The displayed cart total and the amount charged need one explicit pricing contract.",
+          "dependsOn": ["market", "persistence"],
+          "alternatives": [
+            { "label": "Reprice before payment", "description": "Show changes and require the customer to confirm the updated total." },
+            { "label": "Time-limited price quote", "description": "Honor a quoted total until a stated expiry." }
+          ]
+        },
+        {
+          "id": "shipping",
+          "title": "Shipping calculation",
+          "question": "When can the customer see the full shipping charge, and what qualifies for free shipping?",
+          "rationale": "Shipping thresholds depend on destination, item eligibility, and whether discounts reduce the qualifying subtotal.",
+          "dependsOn": ["market", "catalog", "pricing"],
+          "alternatives": [
+            { "label": "Flat rate per destination", "description": "Predictable rates with a clear free-shipping threshold." },
+            { "label": "Carrier-calculated rate", "description": "Needs address and parcel details plus a carrier-failure policy." },
+            { "label": "Collection only", "description": "Replace shipping with pickup locations and collection windows." }
+          ]
+        },
+        {
+          "id": "payment",
+          "title": "Payment and order creation",
+          "question": "Which payment methods are in scope, and when does a checkout become an order?",
+          "rationale": "Payment redirects and asynchronous confirmations can arrive late, twice, or out of order.",
+          "dependsOn": ["market", "identity", "stock", "pricing", "shipping"],
+          "alternatives": [
+            { "label": "Pending order before redirect", "description": "Track an unpaid order and confirm it from verified provider events." },
+            { "label": "Order after confirmed payment", "description": "Persist a checkout attempt that can be reconciled if the browser disappears." }
+          ]
+        },
+        {
+          "id": "recovery",
+          "title": "Failure and retry behavior",
+          "question": "What should happen after a declined payment, an expired stock hold, or a repeated Pay click?",
+          "rationale": "Retries must not create duplicate charges or orders, and recoverable carts should remain usable.",
+          "dependsOn": ["stock", "payment"]
+        },
+        {
+          "id": "acceptance",
+          "title": "Acceptance criteria",
+          "question": "Which concrete examples prove the cart is ready, including price changes, stock races, guest sign-in, and payment retries?",
+          "rationale": "Observable outcomes make the business rules testable across the browser, backend, and payment integration.",
+          "dependsOn": ["persistence", "pricing", "shipping", "payment", "recovery"]
+        }
+      ]
+    },
+    {
+      "id": "ardennes-car-free-weekend",
+      "title": "A car-free weekend in the Ardennes",
+      "description": "Plan a two-night escape from Amsterdam using public transport. Start with a few independent, open-ended questions before committing to a destination or itinerary.",
+      "questions": [
+        {
+          "id": "experience",
+          "title": "What makes it worthwhile?",
+          "question": "What would make this weekend feel successful: long hikes, quiet reading, good food, time together, or something else?",
+          "rationale": "A shared purpose helps distinguish an appealing destination from an appealing trip."
+        },
+        {
+          "id": "constraints",
+          "title": "Dates, budget, and mobility",
+          "question": "Who is coming, which dates work, and what are the per-person budget and walking limits?",
+          "rationale": "Time, money, and accessibility can rule out a route before accommodation becomes relevant."
+        },
+        {
+          "id": "transport",
+          "title": "Can the whole trip be car-free?",
+          "question": "Is public transport plus walking sufficient for the last leg, including the Sunday return, or would a booked taxi be acceptable?",
+          "rationale": "A railway station near a destination does not establish that the accommodation and trailheads are reachable on the intended dates.",
+          "assumption": true,
+          "dependsOn": ["constraints"],
+          "alternatives": [
+            { "label": "Train, bus, and walking only", "description": "Choose accommodation around verified weekend connections." },
+            { "label": "A booked taxi is acceptable", "description": "Include cost and confirm availability before booking accommodation." }
+          ]
+        },
+        {
+          "id": "base",
+          "title": "Choose a base",
+          "question": "Which town and accommodation best fit the desired experience and a verified door-to-door route?",
+          "rationale": "Choose the base after checking the constraints rather than forcing the itinerary around an attractive listing.",
+          "dependsOn": ["experience", "constraints", "transport"]
+        },
+        {
+          "id": "weather",
+          "title": "A weekend that survives rain",
+          "question": "What is the outdoor plan, what replaces it in heavy rain, and what needs booking ahead?",
+          "rationale": "A fallback keeps the weekend useful without assuming good weather or inventing opening hours.",
+          "dependsOn": ["experience", "base"]
+        }
+      ]
+    }
+  ],
+  "proposals": [
+    {
+      "workspaceId": "shopping-cart-checkout",
+      "message": "Consider two further checkout requirements: accessible review of a changed total, and a defined retention policy for abandoned guest carts. Review these additions before accepting them into the plan.",
+      "questions": [
+        {
+          "id": "accessible-review",
+          "title": "Accessible total changes",
+          "question": "How will keyboard and screen-reader users notice a changed total and confirm it before payment?",
+          "rationale": "A price-change rule is incomplete unless every customer can perceive and act on the updated amount.",
+          "dependsOn": ["pricing", "payment"]
+        },
+        {
+          "id": "retention",
+          "title": "Guest-cart retention",
+          "question": "When should abandoned guest carts and any contact details collected during checkout expire?",
+          "rationale": "A useful cart lifetime does not by itself define how long personal data should be retained.",
+          "dependsOn": ["identity", "persistence"]
+        }
+      ]
+    }
+  ]
+}
