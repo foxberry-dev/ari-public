@@ -6,7 +6,7 @@ icon: /icon/rust.svg
 
 # Ari development workspace
 
-Requires Foxberry's Coder installation and its `coder-workspaces` namespace. The template creates an unprivileged pod and a persistent 20Gi home directory. It installs Node 24.15.0, Rust 1.96.0, and OpenCode 2.0.22. Home storage survives workspace stops; deleting the workspace deletes its home volume.
+Requires Foxberry's Coder installation and its `coder-workspaces` namespace. The template creates an unprivileged pod and a persistent 20Gi home directory. It installs Node 24.15.0, Rust 1.96.0, OpenCode 2.0.22, LazyGit 0.66.3, Neovim 0.12.6, and the LazyVim starter configuration. Home storage survives workspace stops; deleting the workspace deletes its home volume.
 
 ## Publish and create
 
@@ -28,6 +28,8 @@ git clone https://github.com/foxberry-dev/ari.git ~/ari
 Skip cloning when `~/ari/.git` already exists. Use your own GitHub credentials: Git prompts for a username and a personal access token when no credential helper is configured. Scope the token to Ari and grant the repository access you need. Enter it at the password prompt, never in the clone URL. GitHub account passwords do not authenticate Git. The template does not configure a credential helper; authentication persistence depends on your chosen helper.
 
 ## Develop
+
+The workspace UI has OpenCode, LazyGit, LazyVim, and Terminal buttons. All tools start in `~/ari`. LazyVim installs its plugins on first launch and retains them in the persistent home. An existing Neovim configuration is preserved.
 
 From your local Ari checkout, connect and start OpenCode:
 

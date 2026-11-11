@@ -28,6 +28,12 @@ resource "coder_agent" "main" {
     PATH = "/home/coder/.local/bin:/home/coder/.local/node/bin:/home/coder/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   }
 
+  display_apps {
+    vscode          = false
+    vscode_insiders = false
+    web_terminal    = true
+  }
+
   metadata {
     key          = "cpu"
     display_name = "CPU"
@@ -46,6 +52,23 @@ resource "coder_agent" "main" {
     script       = "coder stat disk --path /home/coder"
     interval     = 60
   }
+}
+
+resource "coder_app" "terminal_tools" {
+  for_each = {
+    opencode = { name = "OpenCode", icon = "/icon/opencode.svg", command = "opencode --standalone", order = 1 }
+    lazygit  = { name = "LazyGit", icon = "/icon/git.svg", command = "lazygit", order = 2 }
+    lazyvim  = { name = "LazyVim", icon = "https://cdn.simpleicons.org/vim", command = "nvim", order = 3 }
+  }
+
+  agent_id     = coder_agent.main.id
+  slug         = each.key
+  display_name = each.value.name
+  icon         = each.value.icon
+  command      = "cd /home/coder/ari && exec ${each.value.command}"
+  order        = each.value.order
+  share        = "owner"
+  open_in      = "tab"
 }
 
 resource "kubernetes_persistent_volume_claim_v1" "home" {
