@@ -1,7 +1,7 @@
 ---
 display_name: Ari
 description: Persistent Ari development workspace on Foxberry
-icon: /icon/rust.svg
+icon: https://auth.foxberry.dev/static/dist/assets/foxberry/ari.svg
 ---
 
 # Ari development workspace
@@ -18,18 +18,13 @@ coder templates push ari --directory .coder
 coder create ari-pilot --template ari --stop-after 2h --yes
 ```
 
-For a new workspace, connect and clone the private repository over HTTPS:
-
-```sh
-coder ssh ari-pilot
-git clone https://github.com/foxberry-dev/ari.git ~/ari
-```
-
-Skip cloning when `~/ari/.git` already exists. Use your own GitHub credentials: Git prompts for a username and a personal access token when no credential helper is configured. Scope the token to Ari and grant the repository access you need. Enter it at the password prompt, never in the clone URL. GitHub account passwords do not authenticate Git. The template does not configure a credential helper; authentication persistence depends on your chosen helper.
+Link GitHub once per Coder user at https://coder.foxberry.dev/settings/external-auth before creating or updating the workspace. The template requires the `github` external-auth provider. Startup clones `https://github.com/foxberry-dev/ari.git` into `~/ari` through Coder's Git credential helper. Existing checkouts and local edits are preserved. A nonempty directory without a checkout causes startup to fail rather than overwrite its contents.
 
 ## Develop
 
-The workspace UI has OpenCode, LazyGit, LazyVim, and Terminal buttons. All tools start in `~/ari`. LazyVim installs its plugins on first launch and retains them in the persistent home. An existing Neovim configuration is preserved.
+Packages and tool archives use Foxberry's internal read-only Nexus caches. Startup configures npm, Cargo, Rustup, and Playwright downloads. Cache access requires the Coder pod network and no workspace credentials. Project Git operations and explicit plugin updates use GitHub.
+
+The workspace UI has OpenCode, LazyGit, LazyVim, and Terminal buttons. All tools start in `~/ari`. Startup unpacks a checksum-pinned LazyVim snapshot from Nexus with 32 plugins, default compiled parsers, and formatter tools. An existing Neovim configuration is preserved. Explicit plugin updates use GitHub.
 
 From your local Ari checkout, connect and start OpenCode:
 

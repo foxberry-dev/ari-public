@@ -17,15 +17,34 @@ provider "kubernetes" {}
 data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
+locals {
+  paperclip_owned = data.coder_workspace_owner.me.id == "eefa942e-239a-4d30-802f-eb1b78dc671a"
+  broker_enabled = contains(["c2033aa0-4b5a-4498-a69c-9c4728ca25a1", "eefa942e-239a-4d30-802f-eb1b78dc671a"], data.coder_workspace_owner.me.id)
+}
+
+data "coder_external_auth" "github" {
+  optional = true
+  id = "github"
+}
+
 resource "coder_agent" "main" {
   os                      = "linux"
   arch                    = "amd64"
   dir                     = "/home/coder/ari"
-  startup_script          = file("${path.module}/startup.sh")
+  startup_script          = templatefile("${path.module}/startup.sh", {
+    cargo_cache_config = base64encode(file("${path.module}/cargo-cache.mjs"))
+  })
   startup_script_behavior = "blocking"
 
   env = {
-    PATH = "/home/coder/.local/bin:/home/coder/.local/node/bin:/home/coder/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    GIT_CONFIG_SYSTEM = local.paperclip_owned ? "/usr/local/lib/foxberry-git/gitconfig" : "/etc/gitconfig"
+    PATH                           = "/home/coder/.local/bin:/home/coder/.local/node/bin:/home/coder/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    NPM_CONFIG_REGISTRY             = "http://nexus-cache.nexus.svc.cluster.local:8080/repository/npm-proxy/"
+    NPM_CONFIG_AUDIT                = "false"
+    CARGO_REGISTRIES_FOXBERRY_INDEX = "sparse+http://nexus-cache.nexus.svc.cluster.local:8080/repository/cargo-proxy/"
+    RUSTUP_DIST_SERVER             = "http://nexus-cache.nexus.svc.cluster.local:8080/repository/rust-dist-proxy"
+    RUSTUP_UPDATE_ROOT             = "http://nexus-cache.nexus.svc.cluster.local:8080/repository/rust-dist-proxy/rustup"
+    PLAYWRIGHT_DOWNLOAD_HOST       = "http://nexus-cache.nexus.svc.cluster.local:8080/repository/playwright-proxy"
   }
 
   display_apps {
@@ -37,19 +56,19 @@ resource "coder_agent" "main" {
   metadata {
     key          = "cpu"
     display_name = "CPU"
-    script       = "coder stat cpu"
+    script       = "/proc/1/exe stat cpu"
     interval     = 10
   }
   metadata {
     key          = "memory"
     display_name = "Memory"
-    script       = "coder stat mem"
+    script       = "/proc/1/exe stat mem"
     interval     = 10
   }
   metadata {
     key          = "disk"
     display_name = "Home disk"
-    script       = "coder stat disk --path /home/coder"
+    script       = "/proc/1/exe stat disk --path /home/coder"
     interval     = 60
   }
 }
@@ -99,10 +118,12 @@ resource "kubernetes_pod_v1" "workspace" {
       "foxberry.dev/project" = "ari"
       "coder.workspace_name" = data.coder_workspace.me.name
       "coder.owner"          = data.coder_workspace_owner.me.name
+      "foxberry.dev/owner-id" = data.coder_workspace_owner.me.id
     }
   }
   spec {
     automount_service_account_token = false
+    service_account_name = local.broker_enabled ? "broker-client" : "default"
     security_context {
       run_as_non_root = true
       run_as_user     = 1000
@@ -135,17 +156,70 @@ resource "kubernetes_pod_v1" "workspace" {
         exec {
           command = ["test", "-f", "/tmp/ari-coder-ready"]
         }
-        period_seconds = 10
+        initial_delay_seconds = 180
+        period_seconds        = 10
       }
       volume_mount {
         name       = "home"
         mount_path = "/home/coder"
+      }
+      dynamic "volume_mount" {
+        for_each = local.paperclip_owned ? [1] : []
+        content {
+          name       = "git"
+          mount_path = "/usr/local/lib/foxberry-git"
+          read_only  = true
+        }
+      }
+      dynamic "volume_mount" {
+        for_each = local.broker_enabled ? { broker = "/opt/foxberry-broker", identity = "/var/run/foxberry-broker" } : {}
+        content {
+          name       = volume_mount.key
+          mount_path = volume_mount.value
+          read_only  = true
+        }
       }
     }
     volume {
       name = "home"
       persistent_volume_claim {
         claim_name = kubernetes_persistent_volume_claim_v1.home.metadata[0].name
+      }
+    }
+    dynamic "volume" {
+      for_each = local.paperclip_owned ? [1] : []
+      content {
+        name = "git"
+        secret {
+          secret_name  = "paperclip-git-ari"
+          default_mode = "0440"
+        }
+      }
+    }
+    dynamic "volume" {
+      for_each = local.broker_enabled ? [1] : []
+      content {
+        name = "broker"
+        config_map {
+          name         = "subscription-broker-client"
+          default_mode = "0555"
+        }
+      }
+    }
+    dynamic "volume" {
+      for_each = local.broker_enabled ? [1] : []
+      content {
+        name = "identity"
+        projected {
+          default_mode = "0440"
+          sources {
+            service_account_token {
+              audience           = "foxberry-broker"
+              expiration_seconds = 600
+              path               = "token"
+            }
+          }
+        }
       }
     }
   }
