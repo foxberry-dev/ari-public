@@ -18,8 +18,8 @@ data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
 module "workspace" {
-  source       = "http://nexus-cache.nexus.svc.cluster.local:8084/repository/workspace-kit/1a294a75fe93460b06c4aef998a119905a516837ce15dce535dacb861ffd0374.tar.gz?checksum=sha256:1a294a75fe93460b06c4aef998a119905a516837ce15dce535dacb861ffd0374"
-  image        = "registry.foxberry.dev/foxberry/workspace-kit@sha256:da4d7a7052962a5d62616d220cb9c44a39adda3386af0026207374ffcf4b694b"
+  source       = "http://nexus-cache.nexus.svc.cluster.local:8084/repository/workspace-kit/9cb3256883ab3af8882047dc8f30cab4aa9dc5bd715c21c446ef0cec47d8f151.tar.gz?checksum=sha256:9cb3256883ab3af8882047dc8f30cab4aa9dc5bd715c21c446ef0cec47d8f151"
+  image        = "registry.foxberry.dev/foxberry/workspace-kit@sha256:38dcfc6d672c692eca38ff6d8c5ece8a99393c93e0bd997cf38c6e256ad71606"
   runner_image = "registry.foxberry.dev/foxberry/paperclip@sha256:636530bf3f757d74ea1574ccfa5b76350431f2acd4df2b1a41255c3343824907"
   apps         = { web = 5175 }
   project = {
@@ -29,7 +29,7 @@ module "workspace" {
     startup    = file("${path.module}/startup.sh")
     dev = {
       install = "bash .coder/startup.sh"
-      start   = "npm start"
+      start   = "bash .coder/dev.sh"
       health  = "http://127.0.0.1:5175/api/health"
     }
     env        = {
