@@ -18,8 +18,8 @@ data "coder_workspace" "me" {}
 data "coder_workspace_owner" "me" {}
 
 module "workspace" {
-  source       = "http://nexus-cache.nexus.svc.cluster.local:8084/repository/workspace-kit/9cb3256883ab3af8882047dc8f30cab4aa9dc5bd715c21c446ef0cec47d8f151.tar.gz?checksum=sha256:9cb3256883ab3af8882047dc8f30cab4aa9dc5bd715c21c446ef0cec47d8f151"
-  image        = "registry.foxberry.dev/foxberry/workspace-kit@sha256:38dcfc6d672c692eca38ff6d8c5ece8a99393c93e0bd997cf38c6e256ad71606"
+  source       = "http://nexus-cache.nexus.svc.cluster.local:8084/repository/workspace-kit/db77fa0209dcc1b7ee42c3917b312ec4ac08e65cd9046fc58f0d4979bc82b36a.tar.gz?checksum=sha256:db77fa0209dcc1b7ee42c3917b312ec4ac08e65cd9046fc58f0d4979bc82b36a"
+  image        = "registry.foxberry.dev/foxberry/workspace-kit@sha256:cadc76edeaf53afb67d835da83a312724f77cd535539928e3a741c0a19272568"
   runner_image = "registry.foxberry.dev/foxberry/paperclip@sha256:636530bf3f757d74ea1574ccfa5b76350431f2acd4df2b1a41255c3343824907"
   apps         = { web = 5175 }
   project = {
