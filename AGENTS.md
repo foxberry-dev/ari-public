@@ -2,6 +2,8 @@
 
 Read `architecture.md` before changing code. Follow `DESIGN.md` and the shared visual reference at `../lain/DESIGN.html`.
 
+Use `ari_dev` for development and share its viewer URLs. If dev is unavailable, report the blocker instead of falling back to production writes. Read production when needed.
+
 1. Keep HTTP and MCP on loopback. Render authored content as text.
 2. Preserve human answers, alternatives, rationale, and history. Agent changes are proposals requiring human approval.
 3. Use revision checks for writes. Persist UI events before notifying listeners.
