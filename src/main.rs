@@ -1,6 +1,12 @@
+mod graph_export;
 mod http;
 mod mcp;
 mod model;
+mod process_tree;
+mod publication;
+mod related_links;
+mod relationships;
+mod revision_validation;
 mod service;
 #[cfg(test)]
 mod tests;
@@ -19,6 +25,8 @@ struct Cli {
     home: Option<PathBuf>,
     #[arg(long, env = "ARI_PORT", default_value_t = 38477)]
     port: u16,
+    #[arg(long, env = "ARI_CHER_URL", value_parser = http::parse_cher_url)]
+    cher_url: Option<String>,
 }
 
 #[tokio::main]
@@ -44,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
         "Ari: http://127.0.0.1:{port}\nMCP: http://127.0.0.1:{port}/mcp\nData: {}",
         home.display()
     );
-    axum::serve(listener, http::router(service, port))
+    axum::serve(listener, http::router(service, port, cli.cher_url))
         .with_graceful_shutdown(async {
             let _ = tokio::signal::ctrl_c().await;
         })

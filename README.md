@@ -24,25 +24,45 @@ npm run build
 ./target/release/ari
 ```
 
-The binary serves the UI at http://127.0.0.1:38477 and stores data in the user's local data directory. `--home PATH` and `--port PORT` override storage and port. `ARI_PUBLIC_URL` sets published viewer links behind an authenticated gateway. The release binary runs without Node.
+The binary serves the UI at http://127.0.0.1:38477 and stores data in the user's local data directory. `--home PATH` and `--port PORT` override storage and port. `ARI_PUBLIC_URL` sets published viewer links behind an authenticated gateway. Viewing and MCP publication run without Node. Graph exports require Node 24+; PNG/PDF also require Playwright and Chromium. The container includes the renderer. For a standalone binary, install these in a runtime directory and set `ARI_RENDERER_HOME` to that directory; `ARI_CHROME_PATH` optionally selects a Chromium executable.
 
 ## Connect an agent
 
-Configure an HTTP MCP server at `http://127.0.0.1:38477/mcp` in your agent client. `get_context` returns bundled `agent-instructions.md` and a slim index of clarity items. `get_clarification` reads one item by stable ID, exact title, or one-based index. Index positions follow last modification time; use IDs across calls.
+Configure an HTTP MCP server at `http://127.0.0.1:38477/mcp` in your agent client. `get_context` returns bundled `agent-instructions.md` and a slim index of clarity items. `get_clarification` reads one item by stable ID, `ari@<id>` reference, exact title, or one-based index. Index positions follow last modification time; use IDs across calls.
 
-Tools: `get_context`, `get_clarification`, `create_clarification`, `propose_questions`, `poll_event`, and `reply_event`.
+Tools: `get_context`, `get_clarification`, `create_clarification`, and `publish_graph_commit`.
 
-Create a clarification through the MCP `create_clarification` tool. Ask the agent to start this command as a background tool task:
+The human and agent discuss the topic outside Ari. The agent publishes a complete graph snapshot and conversation metadata with each commit. Published nodes have stable IDs, a kind (`topic`, `decided`, or `assumption`), visible answer content, alternatives, and an optional selected alternative. Hidden node reasoning and commit prose are not authoring fields. Every assumption selects one of at least two possible directions, displayed in the sidebar. Typed relationships organise questions into a parent tree, declare independently acyclic information inputs, and state requirements or preferences across nodes or alternatives. Every retained node and relationship belongs in each publication; omissions remain preserved in earlier snapshots. Read `currentGraph` and `revision` before writing. Publication uses `clarificationId`, `expectedRevision`, the complete graph and visible commit title/kind; `confirmedChanges` lists existing decided nodes intentionally corrected, reopened, retitled or removed. Successful writes return a compact receipt. See [agent instructions](agent-instructions.md) for the complete authoring contract.
+
+The read-only browser shows conversation commits on the left, the graph in the center, and node details on the right. Tree shows parent links left to right and reveals inputs and constraints on selection. Grouped and Radial show all relationships and keep settled node positions across publications. Optional canonical `groupLabel` values create meaningful collections of at least two nodes in Grouped; see [group-label guidance](agent-instructions.md#group-labels). Solid parent lines, dashed input arrows, and dotted constraint rules leave color available for Current/Changed. Current shows neutral decided nodes and purple assumptions; Changed highlights differences from the preceding commit. Live MCP publications appear automatically. There are no UI messages, answer forms, approvals, or listeners. Earlier snapshots remain immutable. Stable numbered node labels start at #1 for the topic, persist across revisions, and copy `ari@<clarification-id>@<node-id>` references. Number shortcuts focus the node and its immediate parent/children without opening details; ambiguous number prefixes wait one second.
+
+## Development fixture
+
+With Ari Dev running, load the scripted team-lunch history through its loopback MCP connection:
 
 ```sh
-node /absolute/path/to/ari/scripts/listen.mjs --workspace ITEM_ID
+node scripts/load-fixture.mjs
 ```
 
-The listener long-polls, prints one claimed event, then exits. Supported harnesses notify the agent when the background command completes. The agent reads the current item, replies through `reply_event`, and starts the listener again. The browser receives live updates and lets you approve proposed questions. No model runs inside Ari. A connected MCP server alone cannot wake the agent; without a running listener, requests remain queued.
+The team-lunch fixture contains a seven-commit lunch history and an eighteen-node working graph. It covers confirmed attendance, provisional food and logistics choices, parent/input loops, multi-node requirements, alternative incompatibility, and a provisional preference. The visible description identifies the scripted history as an example. The total allowance is distinct from the per-person budget; confirmed answers remain decided until an acknowledged discussion change reopens them. Existing fixture IDs are left untouched. Use `--url http://127.0.0.1:PORT` for an isolated server or `--file PATH` for another graph fixture.
 
-Events persist across restarts. Claims expire after two minutes; replies require the current token and workspace revision. The UI distinguishes a waiting listener, claimed work, and queued requests. Human answer changes preserve earlier answers and reasons and mark transitive dependents for review. Proposals cannot overwrite human answers. Stale proposals require a fresh agent review.
+A focused color fixture shows every transition together in its latest revision:
 
-Ari starts with an empty library. Agents publish clarifications; users answer questions and review proposals in the browser.
+```sh
+node scripts/load-fixture.mjs --file fixtures/graph-color-transitions.json
+```
+
+Open **All graph colors** and select **Changed**, then the latest revision, **See every transition**:
+
+| Node | Transition | Color |
+| --- | --- | --- |
+| Who collects the food? | New confirmed node | Green |
+| How will we travel? | New assumption | Purple |
+| Where shall we eat? | Assumption answered | Blue |
+| Budget per person | Confirmed answer changed | Amber |
+| Reserve a table? | Node removed | Pink |
+
+Who is joining? stays neutral and decided; Include drinks? stays a muted purple assumption. Every conversation in these fixtures is explicitly scripted.
 
 ## Checks
 
@@ -56,4 +76,16 @@ cargo clippy --all-targets -- -D warnings
 npm run test:browser
 ```
 
-Tests use temporary storage. Browser checks use `/usr/bin/google-chrome`, `CHROME_PATH`, or Playwright's Chromium (`cd frontend && npx playwright install chromium`). They exercise UI answers, a background listener, MCP replies, approval, dialogs, search, and mobile overflow. See `architecture.md` for the state and trust model and `DESIGN.md` for visual rules.
+Tests use temporary storage. Browser checks use `/usr/bin/google-chrome`, `CHROME_PATH`, or Playwright's Chromium (`cd frontend && npx playwright install chromium`). They exercise real MCP graph publications, live updates, commit navigation, node inspection, change highlighting, read-only interaction, library navigation, and mobile overflow. See `architecture.md` for the state and trust model and `DESIGN.md` for visual rules.
+
+Set `ARI_CHER_URL` (or `--cher-url`) to Cher's HTTP(S) URL to return from the
+clarification library with Escape or Ctrl+[. Dialogs close before the workspace
+returns to the library. With no Cher URL, library shortcuts keep their local
+behavior. Use Cher's exact browser origin to restore its per-tab view state.
+
+## Graph downloads
+
+The bottom-right canvas tools provide a draggable minimap, zoom, fit, 1:1, and
+SVG/PNG/PDF downloads. Exports include the entire selected graph. The same
+read-only endpoint is available to agents; see [export parameters and renderer
+requirements](agent-instructions.md#references-and-graph-exports).

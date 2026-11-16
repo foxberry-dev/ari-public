@@ -18,7 +18,8 @@ schemars = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sqlx = { version = "0.9", default-features = false, features = ["runtime-tokio", "sqlite"] }
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "sync", "time", "fs"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "sync", "time", "fs", "process", "io-util"] }
+url = "2"
 uuid = { version = "1", features = ["v4"] }
 
 [dev-dependencies]
@@ -27,3 +28,6 @@ tower = { version = "0.5", features = ["util"] }
 
 [profile.dev]
 debug = 1
+
+[target."cfg(unix)".dependencies]
+nix = { version = "0.32.0", features = ["signal", "process"] }

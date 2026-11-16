@@ -1,0 +1,289 @@
+{
+  "id": "graph-color-transitions",
+  "title": "All graph colors",
+  "description": "Scripted development fixture. In Changed view, the latest revision shows all five transition colors together, plus unchanged decided and assumed nodes.",
+  "commits": [
+    {
+      "graph": {
+        "nodes": [
+          {
+            "id": "topic",
+            "title": "Team lunch",
+            "kind": "topic",
+            "content": "A simple takeaway lunch for four teammates.",
+            "alternatives": []
+          },
+          {
+            "id": "people",
+            "title": "Who is joining?",
+            "kind": "decided",
+            "content": "Four teammates",
+            "alternatives": []
+          },
+          {
+            "id": "venue",
+            "title": "Where shall we eat?",
+            "kind": "assumption",
+            "content": "Office common room",
+            "alternatives": [
+              {
+                "label": "Office common room",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Nearby park",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Office common room"
+          },
+          {
+            "id": "budget",
+            "title": "Budget per person",
+            "kind": "decided",
+            "content": "€25 per person",
+            "alternatives": [
+              {
+                "label": "€25 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€30 per person",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€25 per person"
+          },
+          {
+            "id": "booking",
+            "title": "Reserve a table?",
+            "kind": "assumption",
+            "content": "Keep a restaurant reservation",
+            "alternatives": [
+              {
+                "label": "Keep a restaurant reservation",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "No reservation",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Keep a restaurant reservation"
+          },
+          {
+            "id": "drinks",
+            "title": "Include drinks?",
+            "kind": "assumption",
+            "content": "Include soft drinks",
+            "alternatives": [
+              {
+                "label": "Include soft drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Bring our own drinks",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Include soft drinks"
+          }
+        ],
+        "edges": [
+          {
+            "id": "parent-people",
+            "kind": "parent",
+            "from": "topic",
+            "to": "people"
+          },
+          {
+            "id": "parent-venue",
+            "kind": "parent",
+            "from": "topic",
+            "to": "venue"
+          },
+          {
+            "id": "parent-budget",
+            "kind": "parent",
+            "from": "topic",
+            "to": "budget"
+          },
+          {
+            "id": "parent-booking",
+            "kind": "parent",
+            "from": "topic",
+            "to": "booking"
+          },
+          {
+            "id": "parent-drinks",
+            "kind": "parent",
+            "from": "topic",
+            "to": "drinks"
+          }
+        ]
+      },
+      "commit": {
+        "title": "Start the lunch",
+        "kind": "topicStaged"
+      }
+    },
+    {
+      "graph": {
+        "nodes": [
+          {
+            "id": "topic",
+            "title": "Team lunch",
+            "kind": "topic",
+            "content": "A simple takeaway lunch for four teammates.",
+            "alternatives": []
+          },
+          {
+            "id": "people",
+            "title": "Who is joining?",
+            "kind": "decided",
+            "content": "Four teammates",
+            "alternatives": []
+          },
+          {
+            "id": "venue",
+            "title": "Where shall we eat?",
+            "kind": "decided",
+            "content": "Office common room",
+            "alternatives": [
+              {
+                "label": "Office common room",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Nearby park",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Office common room"
+          },
+          {
+            "id": "budget",
+            "title": "Budget per person",
+            "kind": "decided",
+            "content": "€30 per person",
+            "alternatives": [
+              {
+                "label": "€25 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€30 per person",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€30 per person"
+          },
+          {
+            "id": "drinks",
+            "title": "Include drinks?",
+            "kind": "assumption",
+            "content": "Include soft drinks",
+            "alternatives": [
+              {
+                "label": "Include soft drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Bring our own drinks",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Include soft drinks"
+          },
+          {
+            "id": "collector",
+            "title": "Who collects the food?",
+            "kind": "decided",
+            "content": "Alex collects at 11:45",
+            "alternatives": [],
+            "groupLabel": "food-pickup"
+          },
+          {
+            "id": "transport",
+            "title": "How will we travel?",
+            "kind": "assumption",
+            "content": "Walk together",
+            "alternatives": [
+              {
+                "label": "Walk together",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Use a cargo bike",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Walk together",
+            "groupLabel": "food-pickup"
+          }
+        ],
+        "edges": [
+          {
+            "id": "parent-people",
+            "kind": "parent",
+            "from": "topic",
+            "to": "people"
+          },
+          {
+            "id": "parent-venue",
+            "kind": "parent",
+            "from": "topic",
+            "to": "venue"
+          },
+          {
+            "id": "parent-budget",
+            "kind": "parent",
+            "from": "topic",
+            "to": "budget"
+          },
+          {
+            "id": "parent-drinks",
+            "kind": "parent",
+            "from": "topic",
+            "to": "drinks"
+          },
+          {
+            "id": "parent-collector",
+            "kind": "parent",
+            "from": "topic",
+            "to": "collector"
+          },
+          {
+            "id": "parent-transport",
+            "kind": "parent",
+            "from": "collector",
+            "to": "transport"
+          }
+        ]
+      },
+      "commit": {
+        "title": "See every transition",
+        "kind": "openDiscussion"
+      },
+      "confirmedChanges": [
+        "budget"
+      ]
+    }
+  ]
+}

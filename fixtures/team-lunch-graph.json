@@ -1,0 +1,3104 @@
+{
+  "id": "team-lunch-decision-space",
+  "title": "Team lunch decision space",
+  "description": "Scripted team lunch planning with seven typed graph snapshots, provisional choices, cross-branch requirements, and immutable conversation history.",
+  "commits": [
+    {
+      "graph": {
+        "nodes": [
+          {
+            "id": "topic",
+            "title": "Team lunch",
+            "kind": "topic",
+            "content": "A relaxed lunch together",
+            "alternatives": []
+          },
+          {
+            "id": "people",
+            "title": "Who’s joining?",
+            "kind": "assumption",
+            "content": "Core four teammates",
+            "alternatives": [
+              {
+                "label": "Core four teammates",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Whole 12-person team",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Team and contractors",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Core four teammates",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "meal",
+            "title": "What kind of lunch?",
+            "kind": "assumption",
+            "content": "Sit-down lunch",
+            "alternatives": [
+              {
+                "label": "Sit-down lunch",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Casual café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway together",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Sit-down lunch",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "budget",
+            "title": "What can we spend?",
+            "kind": "assumption",
+            "content": "€35 per person",
+            "alternatives": [
+              {
+                "label": "€25 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€35 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€50 per person",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€35 per person",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "headcount",
+            "title": "How many people?",
+            "kind": "assumption",
+            "content": "Four people",
+            "alternatives": [
+              {
+                "label": "Four people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Six people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Twelve people",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Four people",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "guests",
+            "title": "Any guests?",
+            "kind": "assumption",
+            "content": "Core team only",
+            "alternatives": [
+              {
+                "label": "Core team only",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Include contractors",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Include guests",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Core team only",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "diet",
+            "title": "Any dietary needs?",
+            "kind": "assumption",
+            "content": "No restrictions",
+            "alternatives": [
+              {
+                "label": "No restrictions",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "One vegetarian and one vegan",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Still checking",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "No restrictions",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "venue",
+            "title": "Where shall we eat?",
+            "kind": "assumption",
+            "content": "Walkable café",
+            "alternatives": [
+              {
+                "label": "Walkable café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Italian restaurant",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway near the office",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Walkable café"
+          },
+          {
+            "id": "amount",
+            "title": "Total lunch allowance",
+            "kind": "assumption",
+            "content": "€140 total",
+            "alternatives": [
+              {
+                "label": "€100 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€140 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€200 total",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€140 total",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "drinks",
+            "title": "Include drinks?",
+            "kind": "assumption",
+            "content": "Include soft drinks",
+            "alternatives": [
+              {
+                "label": "Include soft drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Include all drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Food only",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Include soft drinks",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "vegan",
+            "title": "A proper vegan main?",
+            "kind": "assumption",
+            "content": "Not needed",
+            "alternatives": [
+              {
+                "label": "One vegan main required",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "More than one vegan option",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Not needed",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Not needed",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "allergies",
+            "title": "Any allergies?",
+            "kind": "assumption",
+            "content": "No known allergies",
+            "alternatives": [
+              {
+                "label": "No known allergies",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Need to check",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Specific allergy requirements",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "No known allergies",
+            "groupLabel": "dietary-needs"
+          }
+        ],
+        "edges": [
+          {
+            "id": "parent-people",
+            "kind": "parent",
+            "from": "topic",
+            "to": "people"
+          },
+          {
+            "id": "parent-meal",
+            "kind": "parent",
+            "from": "topic",
+            "to": "meal"
+          },
+          {
+            "id": "parent-budget",
+            "kind": "parent",
+            "from": "topic",
+            "to": "budget"
+          },
+          {
+            "id": "parent-headcount",
+            "kind": "parent",
+            "from": "people",
+            "to": "headcount"
+          },
+          {
+            "id": "parent-guests",
+            "kind": "parent",
+            "from": "people",
+            "to": "guests"
+          },
+          {
+            "id": "parent-diet",
+            "kind": "parent",
+            "from": "people",
+            "to": "diet"
+          },
+          {
+            "id": "parent-venue",
+            "kind": "parent",
+            "from": "meal",
+            "to": "venue"
+          },
+          {
+            "id": "parent-amount",
+            "kind": "parent",
+            "from": "budget",
+            "to": "amount"
+          },
+          {
+            "id": "parent-drinks",
+            "kind": "parent",
+            "from": "budget",
+            "to": "drinks"
+          },
+          {
+            "id": "parent-vegan",
+            "kind": "parent",
+            "from": "diet",
+            "to": "vegan"
+          },
+          {
+            "id": "parent-allergies",
+            "kind": "parent",
+            "from": "diet",
+            "to": "allergies"
+          },
+          {
+            "id": "input-headcount-amount",
+            "kind": "input",
+            "from": "headcount",
+            "to": "amount",
+            "rationale": "Headcount multiplies the per-person allowance."
+          },
+          {
+            "id": "input-budget-amount",
+            "kind": "input",
+            "from": "budget",
+            "to": "amount",
+            "rationale": "The allowance determines the per-person spending."
+          },
+          {
+            "id": "vegan-meals",
+            "kind": "constraint",
+            "participants": [
+              {
+                "nodeId": "diet"
+              },
+              {
+                "nodeId": "vegan"
+              },
+              {
+                "nodeId": "venue"
+              }
+            ],
+            "label": "Suitable meals",
+            "rule": "The provider must supply meals suitable for the dietary requirements of all attendees.",
+            "strength": "requirement"
+          }
+        ]
+      },
+      "commit": {
+        "title": "Plan the lunch",
+        "kind": "topicStaged"
+      }
+    },
+    {
+      "graph": {
+        "nodes": [
+          {
+            "id": "topic",
+            "title": "Team lunch",
+            "kind": "topic",
+            "content": "A relaxed lunch together",
+            "alternatives": []
+          },
+          {
+            "id": "people",
+            "title": "Who’s joining?",
+            "kind": "decided",
+            "content": "Core four teammates",
+            "alternatives": [
+              {
+                "label": "Core four teammates",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Whole 12-person team",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Team and contractors",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Core four teammates",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "meal",
+            "title": "What kind of lunch?",
+            "kind": "assumption",
+            "content": "Sit-down lunch",
+            "alternatives": [
+              {
+                "label": "Sit-down lunch",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Casual café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway together",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Sit-down lunch",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "budget",
+            "title": "What can we spend?",
+            "kind": "assumption",
+            "content": "€35 per person",
+            "alternatives": [
+              {
+                "label": "€25 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€35 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€50 per person",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€35 per person",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "headcount",
+            "title": "How many people?",
+            "kind": "decided",
+            "content": "Four attendees",
+            "alternatives": [
+              {
+                "label": "Four people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Six people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Twelve people",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Four people",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "diet",
+            "title": "Any dietary needs?",
+            "kind": "assumption",
+            "content": "No restrictions",
+            "alternatives": [
+              {
+                "label": "No restrictions",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "One vegetarian and one vegan",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Still checking",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "No restrictions",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "venue",
+            "title": "Where shall we eat?",
+            "kind": "assumption",
+            "content": "Walkable café",
+            "alternatives": [
+              {
+                "label": "Walkable café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Italian restaurant",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway near the office",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Walkable café"
+          },
+          {
+            "id": "amount",
+            "title": "Total lunch allowance",
+            "kind": "assumption",
+            "content": "€140 total",
+            "alternatives": [
+              {
+                "label": "€100 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€140 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€200 total",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€140 total",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "drinks",
+            "title": "Include drinks?",
+            "kind": "assumption",
+            "content": "Include soft drinks",
+            "alternatives": [
+              {
+                "label": "Include soft drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Include all drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Food only",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Include soft drinks",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "vegan",
+            "title": "A proper vegan main?",
+            "kind": "assumption",
+            "content": "Not needed",
+            "alternatives": [
+              {
+                "label": "One vegan main required",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "More than one vegan option",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Not needed",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Not needed",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "allergies",
+            "title": "Any allergies?",
+            "kind": "assumption",
+            "content": "No known allergies",
+            "alternatives": [
+              {
+                "label": "No known allergies",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Need to check",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Specific allergy requirements",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "No known allergies",
+            "groupLabel": "dietary-needs"
+          }
+        ],
+        "edges": [
+          {
+            "id": "parent-people",
+            "kind": "parent",
+            "from": "topic",
+            "to": "people"
+          },
+          {
+            "id": "parent-meal",
+            "kind": "parent",
+            "from": "topic",
+            "to": "meal"
+          },
+          {
+            "id": "parent-budget",
+            "kind": "parent",
+            "from": "topic",
+            "to": "budget"
+          },
+          {
+            "id": "parent-headcount",
+            "kind": "parent",
+            "from": "people",
+            "to": "headcount"
+          },
+          {
+            "id": "parent-diet",
+            "kind": "parent",
+            "from": "people",
+            "to": "diet"
+          },
+          {
+            "id": "parent-venue",
+            "kind": "parent",
+            "from": "meal",
+            "to": "venue"
+          },
+          {
+            "id": "parent-amount",
+            "kind": "parent",
+            "from": "budget",
+            "to": "amount"
+          },
+          {
+            "id": "parent-drinks",
+            "kind": "parent",
+            "from": "budget",
+            "to": "drinks"
+          },
+          {
+            "id": "parent-vegan",
+            "kind": "parent",
+            "from": "diet",
+            "to": "vegan"
+          },
+          {
+            "id": "parent-allergies",
+            "kind": "parent",
+            "from": "diet",
+            "to": "allergies"
+          },
+          {
+            "id": "input-headcount-amount",
+            "kind": "input",
+            "from": "headcount",
+            "to": "amount",
+            "rationale": "Headcount multiplies the per-person allowance."
+          },
+          {
+            "id": "input-budget-amount",
+            "kind": "input",
+            "from": "budget",
+            "to": "amount",
+            "rationale": "The allowance determines the per-person spending."
+          },
+          {
+            "id": "vegan-meals",
+            "kind": "constraint",
+            "participants": [
+              {
+                "nodeId": "diet"
+              },
+              {
+                "nodeId": "vegan"
+              },
+              {
+                "nodeId": "venue"
+              }
+            ],
+            "label": "Suitable meals",
+            "rule": "The provider must supply meals suitable for the dietary requirements of all attendees.",
+            "strength": "requirement"
+          }
+        ]
+      },
+      "commit": {
+        "title": "Core teammates",
+        "kind": "directAnswer"
+      },
+      "confirmedChanges": []
+    },
+    {
+      "graph": {
+        "nodes": [
+          {
+            "id": "topic",
+            "title": "Team lunch",
+            "kind": "topic",
+            "content": "A relaxed lunch together",
+            "alternatives": []
+          },
+          {
+            "id": "people",
+            "title": "Who’s joining?",
+            "kind": "decided",
+            "content": "Core four teammates",
+            "alternatives": [
+              {
+                "label": "Core four teammates",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Whole 12-person team",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Team and contractors",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Core four teammates",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "meal",
+            "title": "What kind of lunch?",
+            "kind": "assumption",
+            "content": "Sit-down lunch",
+            "alternatives": [
+              {
+                "label": "Sit-down lunch",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Casual café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway together",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Sit-down lunch",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "budget",
+            "title": "What can we spend?",
+            "kind": "assumption",
+            "content": "€35 per person",
+            "alternatives": [
+              {
+                "label": "€25 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€35 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€50 per person",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€35 per person",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "headcount",
+            "title": "How many people?",
+            "kind": "decided",
+            "content": "Four attendees",
+            "alternatives": [
+              {
+                "label": "Four people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Six people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Twelve people",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Four people",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "diet",
+            "title": "Any dietary needs?",
+            "kind": "decided",
+            "content": "One vegetarian · one vegan",
+            "alternatives": [
+              {
+                "label": "No restrictions",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "One vegetarian and one vegan",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Still checking",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "One vegetarian and one vegan",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "venue",
+            "title": "Where shall we eat?",
+            "kind": "assumption",
+            "content": "Walkable café",
+            "alternatives": [
+              {
+                "label": "Walkable café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Italian restaurant",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway near the office",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Walkable café"
+          },
+          {
+            "id": "amount",
+            "title": "Total lunch allowance",
+            "kind": "assumption",
+            "content": "€140 total",
+            "alternatives": [
+              {
+                "label": "€100 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€140 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€200 total",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€140 total",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "drinks",
+            "title": "Include drinks?",
+            "kind": "assumption",
+            "content": "Include soft drinks",
+            "alternatives": [
+              {
+                "label": "Include soft drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Include all drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Food only",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Include soft drinks",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "vegan",
+            "title": "A proper vegan main?",
+            "kind": "decided",
+            "content": "A substantial vegan main required",
+            "alternatives": [
+              {
+                "label": "One vegan main required",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "More than one vegan option",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Not needed",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "One vegan main required",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "allergies",
+            "title": "Any allergies?",
+            "kind": "assumption",
+            "content": "No known allergies",
+            "alternatives": [
+              {
+                "label": "No known allergies",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Need to check",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Specific allergy requirements",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "No known allergies",
+            "groupLabel": "dietary-needs"
+          }
+        ],
+        "edges": [
+          {
+            "id": "parent-people",
+            "kind": "parent",
+            "from": "topic",
+            "to": "people"
+          },
+          {
+            "id": "parent-meal",
+            "kind": "parent",
+            "from": "topic",
+            "to": "meal"
+          },
+          {
+            "id": "parent-budget",
+            "kind": "parent",
+            "from": "topic",
+            "to": "budget"
+          },
+          {
+            "id": "parent-headcount",
+            "kind": "parent",
+            "from": "people",
+            "to": "headcount"
+          },
+          {
+            "id": "parent-diet",
+            "kind": "parent",
+            "from": "people",
+            "to": "diet"
+          },
+          {
+            "id": "parent-venue",
+            "kind": "parent",
+            "from": "meal",
+            "to": "venue"
+          },
+          {
+            "id": "parent-amount",
+            "kind": "parent",
+            "from": "budget",
+            "to": "amount"
+          },
+          {
+            "id": "parent-drinks",
+            "kind": "parent",
+            "from": "budget",
+            "to": "drinks"
+          },
+          {
+            "id": "parent-vegan",
+            "kind": "parent",
+            "from": "diet",
+            "to": "vegan"
+          },
+          {
+            "id": "parent-allergies",
+            "kind": "parent",
+            "from": "diet",
+            "to": "allergies"
+          },
+          {
+            "id": "input-headcount-amount",
+            "kind": "input",
+            "from": "headcount",
+            "to": "amount",
+            "rationale": "Headcount multiplies the per-person allowance."
+          },
+          {
+            "id": "input-budget-amount",
+            "kind": "input",
+            "from": "budget",
+            "to": "amount",
+            "rationale": "The allowance determines the per-person spending."
+          },
+          {
+            "id": "vegan-meals",
+            "kind": "constraint",
+            "participants": [
+              {
+                "nodeId": "diet"
+              },
+              {
+                "nodeId": "vegan"
+              },
+              {
+                "nodeId": "venue"
+              }
+            ],
+            "label": "Suitable meals",
+            "rule": "The provider must supply meals suitable for the dietary requirements of all attendees.",
+            "strength": "requirement"
+          }
+        ]
+      },
+      "commit": {
+        "title": "Dietary needs",
+        "kind": "directAnswer"
+      },
+      "confirmedChanges": []
+    },
+    {
+      "graph": {
+        "nodes": [
+          {
+            "id": "topic",
+            "title": "Team lunch",
+            "kind": "topic",
+            "content": "A relaxed lunch together",
+            "alternatives": []
+          },
+          {
+            "id": "people",
+            "title": "Who’s joining?",
+            "kind": "decided",
+            "content": "Core four teammates",
+            "alternatives": [
+              {
+                "label": "Core four teammates",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Whole 12-person team",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Team and contractors",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Core four teammates",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "meal",
+            "title": "What kind of lunch?",
+            "kind": "assumption",
+            "content": "Sit-down lunch",
+            "alternatives": [
+              {
+                "label": "Sit-down lunch",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Casual café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway together",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Sit-down lunch",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "budget",
+            "title": "What can we spend?",
+            "kind": "decided",
+            "content": "€35 per person",
+            "alternatives": [
+              {
+                "label": "€25 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€35 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€50 per person",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€35 per person",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "headcount",
+            "title": "How many people?",
+            "kind": "decided",
+            "content": "Four attendees",
+            "alternatives": [
+              {
+                "label": "Four people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Six people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Twelve people",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Four people",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "diet",
+            "title": "Any dietary needs?",
+            "kind": "decided",
+            "content": "One vegetarian · one vegan",
+            "alternatives": [
+              {
+                "label": "No restrictions",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "One vegetarian and one vegan",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Still checking",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "One vegetarian and one vegan",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "venue",
+            "title": "Where shall we eat?",
+            "kind": "assumption",
+            "content": "Italian restaurant",
+            "alternatives": [
+              {
+                "label": "Walkable café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Italian restaurant",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway near the office",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Italian restaurant"
+          },
+          {
+            "id": "amount",
+            "title": "Total lunch allowance",
+            "kind": "decided",
+            "content": "€140 total",
+            "alternatives": [
+              {
+                "label": "€100 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€140 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€200 total",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€140 total",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "drinks",
+            "title": "Include drinks?",
+            "kind": "assumption",
+            "content": "Include soft drinks",
+            "alternatives": [
+              {
+                "label": "Include soft drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Include all drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Food only",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Include soft drinks",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "vegan",
+            "title": "A proper vegan main?",
+            "kind": "decided",
+            "content": "A substantial vegan main required",
+            "alternatives": [
+              {
+                "label": "One vegan main required",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "More than one vegan option",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Not needed",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "One vegan main required",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "allergies",
+            "title": "Any allergies?",
+            "kind": "assumption",
+            "content": "No known allergies",
+            "alternatives": [
+              {
+                "label": "No known allergies",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Need to check",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Specific allergy requirements",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "No known allergies",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "timing",
+            "title": "When are we going?",
+            "kind": "decided",
+            "content": "Friday at noon",
+            "alternatives": [
+              {
+                "label": "Friday at noon",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Another weekday",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Still flexible",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Friday at noon"
+          },
+          {
+            "id": "italian",
+            "title": "Could Italian work?",
+            "kind": "assumption",
+            "content": "Yes, focus on Italian",
+            "alternatives": [
+              {
+                "label": "Yes, focus on Italian",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Any place with vegan options",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Prefer takeaway",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Yes, focus on Italian",
+            "groupLabel": "meal-options"
+          }
+        ],
+        "edges": [
+          {
+            "id": "parent-people",
+            "kind": "parent",
+            "from": "topic",
+            "to": "people"
+          },
+          {
+            "id": "parent-meal",
+            "kind": "parent",
+            "from": "topic",
+            "to": "meal"
+          },
+          {
+            "id": "parent-budget",
+            "kind": "parent",
+            "from": "topic",
+            "to": "budget"
+          },
+          {
+            "id": "parent-headcount",
+            "kind": "parent",
+            "from": "people",
+            "to": "headcount"
+          },
+          {
+            "id": "parent-diet",
+            "kind": "parent",
+            "from": "people",
+            "to": "diet"
+          },
+          {
+            "id": "parent-venue",
+            "kind": "parent",
+            "from": "meal",
+            "to": "venue"
+          },
+          {
+            "id": "parent-amount",
+            "kind": "parent",
+            "from": "budget",
+            "to": "amount"
+          },
+          {
+            "id": "parent-drinks",
+            "kind": "parent",
+            "from": "budget",
+            "to": "drinks"
+          },
+          {
+            "id": "parent-vegan",
+            "kind": "parent",
+            "from": "diet",
+            "to": "vegan"
+          },
+          {
+            "id": "parent-allergies",
+            "kind": "parent",
+            "from": "diet",
+            "to": "allergies"
+          },
+          {
+            "id": "parent-timing",
+            "kind": "parent",
+            "from": "topic",
+            "to": "timing"
+          },
+          {
+            "id": "parent-italian",
+            "kind": "parent",
+            "from": "venue",
+            "to": "italian"
+          },
+          {
+            "id": "input-headcount-amount",
+            "kind": "input",
+            "from": "headcount",
+            "to": "amount",
+            "rationale": "Headcount multiplies the per-person allowance."
+          },
+          {
+            "id": "input-budget-amount",
+            "kind": "input",
+            "from": "budget",
+            "to": "amount",
+            "rationale": "The allowance determines the per-person spending."
+          },
+          {
+            "id": "vegan-meals",
+            "kind": "constraint",
+            "participants": [
+              {
+                "nodeId": "diet"
+              },
+              {
+                "nodeId": "vegan"
+              },
+              {
+                "nodeId": "venue"
+              }
+            ],
+            "label": "Suitable meals",
+            "rule": "The provider must supply meals suitable for the dietary requirements of all attendees.",
+            "strength": "requirement"
+          }
+        ]
+      },
+      "commit": {
+        "title": "Shape the lunch",
+        "kind": "openDiscussion"
+      },
+      "confirmedChanges": []
+    },
+    {
+      "graph": {
+        "nodes": [
+          {
+            "id": "topic",
+            "title": "Team lunch",
+            "kind": "topic",
+            "content": "A relaxed lunch together",
+            "alternatives": []
+          },
+          {
+            "id": "people",
+            "title": "Who’s joining?",
+            "kind": "decided",
+            "content": "Six teammates",
+            "alternatives": [
+              {
+                "label": "Core four teammates",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Whole 12-person team",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Team and contractors",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Six teammates",
+                "description": "The revised group size.",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Six teammates",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "meal",
+            "title": "What kind of lunch?",
+            "kind": "decided",
+            "content": "Takeaway together",
+            "alternatives": [
+              {
+                "label": "Sit-down lunch",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Casual café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway together",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Takeaway together",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "budget",
+            "title": "What can we spend?",
+            "kind": "decided",
+            "content": "€25 per person",
+            "alternatives": [
+              {
+                "label": "€25 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€35 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€50 per person",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€25 per person",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "headcount",
+            "title": "How many people?",
+            "kind": "decided",
+            "content": "Six attendees",
+            "alternatives": [
+              {
+                "label": "Four people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Six people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Twelve people",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Six people",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "diet",
+            "title": "Any dietary needs?",
+            "kind": "decided",
+            "content": "One vegetarian · one vegan",
+            "alternatives": [
+              {
+                "label": "No restrictions",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "One vegetarian and one vegan",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Still checking",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "One vegetarian and one vegan",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "venue",
+            "title": "Where shall we eat?",
+            "kind": "assumption",
+            "content": "Takeaway near the office",
+            "alternatives": [
+              {
+                "label": "Walkable café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Italian restaurant",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway near the office",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Takeaway near the office"
+          },
+          {
+            "id": "amount",
+            "title": "Total lunch allowance",
+            "kind": "decided",
+            "content": "€150 total",
+            "alternatives": [
+              {
+                "label": "€150 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€210 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€300 total",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€150 total",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "drinks",
+            "title": "Include drinks?",
+            "kind": "assumption",
+            "content": "Include soft drinks",
+            "alternatives": [
+              {
+                "label": "Include soft drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Include all drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Food only",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Include soft drinks",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "vegan",
+            "title": "A proper vegan main?",
+            "kind": "decided",
+            "content": "A substantial vegan main required",
+            "alternatives": [
+              {
+                "label": "One vegan main required",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "More than one vegan option",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Not needed",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "One vegan main required",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "allergies",
+            "title": "Any allergies?",
+            "kind": "assumption",
+            "content": "No known allergies",
+            "alternatives": [
+              {
+                "label": "No known allergies",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Need to check",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Specific allergy requirements",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "No known allergies",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "timing",
+            "title": "When are we going?",
+            "kind": "decided",
+            "content": "Friday at noon",
+            "alternatives": [
+              {
+                "label": "Friday at noon",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Another weekday",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Still flexible",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Friday at noon"
+          },
+          {
+            "id": "pickup",
+            "title": "Where to collect?",
+            "kind": "assumption",
+            "content": "Walkable collection",
+            "alternatives": [
+              {
+                "label": "Walkable collection",
+                "description": "Provisional starting point; not confirmed.",
+                "recommended": false
+              },
+              {
+                "label": "Need to discuss",
+                "description": "Keep the detail open.",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Walkable collection"
+          }
+        ],
+        "edges": [
+          {
+            "id": "parent-people",
+            "kind": "parent",
+            "from": "topic",
+            "to": "people"
+          },
+          {
+            "id": "parent-meal",
+            "kind": "parent",
+            "from": "topic",
+            "to": "meal"
+          },
+          {
+            "id": "parent-budget",
+            "kind": "parent",
+            "from": "topic",
+            "to": "budget"
+          },
+          {
+            "id": "parent-headcount",
+            "kind": "parent",
+            "from": "people",
+            "to": "headcount"
+          },
+          {
+            "id": "parent-diet",
+            "kind": "parent",
+            "from": "people",
+            "to": "diet"
+          },
+          {
+            "id": "parent-venue",
+            "kind": "parent",
+            "from": "meal",
+            "to": "venue"
+          },
+          {
+            "id": "parent-amount",
+            "kind": "parent",
+            "from": "budget",
+            "to": "amount"
+          },
+          {
+            "id": "parent-drinks",
+            "kind": "parent",
+            "from": "budget",
+            "to": "drinks"
+          },
+          {
+            "id": "parent-vegan",
+            "kind": "parent",
+            "from": "diet",
+            "to": "vegan"
+          },
+          {
+            "id": "parent-allergies",
+            "kind": "parent",
+            "from": "diet",
+            "to": "allergies"
+          },
+          {
+            "id": "parent-timing",
+            "kind": "parent",
+            "from": "topic",
+            "to": "timing"
+          },
+          {
+            "id": "parent-pickup",
+            "kind": "parent",
+            "from": "venue",
+            "to": "pickup"
+          },
+          {
+            "id": "input-headcount-amount",
+            "kind": "input",
+            "from": "headcount",
+            "to": "amount",
+            "rationale": "Headcount multiplies the per-person allowance."
+          },
+          {
+            "id": "input-budget-amount",
+            "kind": "input",
+            "from": "budget",
+            "to": "amount",
+            "rationale": "The allowance determines the per-person spending."
+          },
+          {
+            "id": "vegan-meals",
+            "kind": "constraint",
+            "participants": [
+              {
+                "nodeId": "diet"
+              },
+              {
+                "nodeId": "vegan"
+              },
+              {
+                "nodeId": "venue"
+              }
+            ],
+            "label": "Suitable meals",
+            "rule": "The provider must supply meals suitable for the dietary requirements of all attendees.",
+            "strength": "requirement"
+          }
+        ]
+      },
+      "commit": {
+        "title": "Change the plan",
+        "kind": "revisedDecision"
+      },
+      "confirmedChanges": [
+        "people",
+        "budget",
+        "headcount",
+        "amount"
+      ]
+    },
+    {
+      "graph": {
+        "nodes": [
+          {
+            "id": "topic",
+            "title": "Team lunch",
+            "kind": "topic",
+            "content": "A relaxed lunch together",
+            "alternatives": []
+          },
+          {
+            "id": "people",
+            "title": "Who’s joining?",
+            "kind": "decided",
+            "content": "Whole 12-person team",
+            "alternatives": [
+              {
+                "label": "Core four teammates",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Whole 12-person team",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Team and contractors",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Six teammates",
+                "description": "The revised group size.",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Whole 12-person team",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "meal",
+            "title": "What kind of lunch?",
+            "kind": "decided",
+            "content": "Takeaway together",
+            "alternatives": [
+              {
+                "label": "Sit-down lunch",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Casual café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway together",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Takeaway together",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "budget",
+            "title": "What can we spend?",
+            "kind": "decided",
+            "content": "€25 per person",
+            "alternatives": [
+              {
+                "label": "€25 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€35 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€50 per person",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€25 per person",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "headcount",
+            "title": "How many people?",
+            "kind": "decided",
+            "content": "Twelve attendees",
+            "alternatives": [
+              {
+                "label": "Four people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Six people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Twelve people",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Twelve people",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "diet",
+            "title": "Dietary needs for all twelve?",
+            "kind": "assumption",
+            "content": "One vegetarian · one vegan",
+            "alternatives": [
+              {
+                "label": "No restrictions",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "One vegetarian and one vegan",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Still checking",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "One vegetarian and one vegan",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "venue",
+            "title": "Where shall we eat?",
+            "kind": "assumption",
+            "content": "Takeaway near the office",
+            "alternatives": [
+              {
+                "label": "Walkable café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Italian restaurant",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway near the office",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Takeaway near the office"
+          },
+          {
+            "id": "amount",
+            "title": "Total lunch allowance",
+            "kind": "decided",
+            "content": "€300 total",
+            "alternatives": [
+              {
+                "label": "€300 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€420 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€600 total",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€300 total",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "drinks",
+            "title": "Include drinks?",
+            "kind": "assumption",
+            "content": "Include soft drinks",
+            "alternatives": [
+              {
+                "label": "Include soft drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Include all drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Food only",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Include soft drinks",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "vegan",
+            "title": "A proper vegan main?",
+            "kind": "decided",
+            "content": "A substantial vegan main required",
+            "alternatives": [
+              {
+                "label": "One vegan main required",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "More than one vegan option",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Not needed",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "One vegan main required",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "allergies",
+            "title": "Any allergies?",
+            "kind": "assumption",
+            "content": "No known allergies",
+            "alternatives": [
+              {
+                "label": "No known allergies",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Need to check",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Specific allergy requirements",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "No known allergies",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "timing",
+            "title": "When are we going?",
+            "kind": "decided",
+            "content": "Friday at noon",
+            "alternatives": [
+              {
+                "label": "Friday at noon",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Another weekday",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Still flexible",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Friday at noon"
+          },
+          {
+            "id": "pickup",
+            "title": "Where to collect?",
+            "kind": "assumption",
+            "content": "Walkable collection",
+            "alternatives": [
+              {
+                "label": "Walkable collection",
+                "description": "Provisional starting point; not confirmed.",
+                "recommended": false
+              },
+              {
+                "label": "Need to discuss",
+                "description": "Keep the detail open.",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Walkable collection"
+          }
+        ],
+        "edges": [
+          {
+            "id": "parent-people",
+            "kind": "parent",
+            "from": "topic",
+            "to": "people"
+          },
+          {
+            "id": "parent-meal",
+            "kind": "parent",
+            "from": "topic",
+            "to": "meal"
+          },
+          {
+            "id": "parent-budget",
+            "kind": "parent",
+            "from": "topic",
+            "to": "budget"
+          },
+          {
+            "id": "parent-headcount",
+            "kind": "parent",
+            "from": "people",
+            "to": "headcount"
+          },
+          {
+            "id": "parent-diet",
+            "kind": "parent",
+            "from": "people",
+            "to": "diet"
+          },
+          {
+            "id": "parent-venue",
+            "kind": "parent",
+            "from": "meal",
+            "to": "venue"
+          },
+          {
+            "id": "parent-amount",
+            "kind": "parent",
+            "from": "budget",
+            "to": "amount"
+          },
+          {
+            "id": "parent-drinks",
+            "kind": "parent",
+            "from": "budget",
+            "to": "drinks"
+          },
+          {
+            "id": "parent-vegan",
+            "kind": "parent",
+            "from": "diet",
+            "to": "vegan"
+          },
+          {
+            "id": "parent-allergies",
+            "kind": "parent",
+            "from": "diet",
+            "to": "allergies"
+          },
+          {
+            "id": "parent-timing",
+            "kind": "parent",
+            "from": "topic",
+            "to": "timing"
+          },
+          {
+            "id": "parent-pickup",
+            "kind": "parent",
+            "from": "venue",
+            "to": "pickup"
+          },
+          {
+            "id": "input-headcount-amount",
+            "kind": "input",
+            "from": "headcount",
+            "to": "amount",
+            "rationale": "Headcount multiplies the per-person allowance."
+          },
+          {
+            "id": "input-budget-amount",
+            "kind": "input",
+            "from": "budget",
+            "to": "amount",
+            "rationale": "The allowance determines the per-person spending."
+          },
+          {
+            "id": "vegan-meals",
+            "kind": "constraint",
+            "participants": [
+              {
+                "nodeId": "diet"
+              },
+              {
+                "nodeId": "vegan"
+              },
+              {
+                "nodeId": "venue"
+              }
+            ],
+            "label": "Suitable meals",
+            "rule": "The provider must supply meals suitable for the dietary requirements of all attendees.",
+            "strength": "requirement"
+          }
+        ]
+      },
+      "commit": {
+        "title": "Whole team joins",
+        "kind": "revisedDecision"
+      },
+      "confirmedChanges": [
+        "people",
+        "headcount",
+        "diet",
+        "amount"
+      ]
+    },
+    {
+      "graph": {
+        "nodes": [
+          {
+            "id": "topic",
+            "title": "Team lunch",
+            "kind": "topic",
+            "content": "Plan a relaxed lunch for the whole twelve-person team.",
+            "alternatives": []
+          },
+          {
+            "id": "people",
+            "title": "Who’s joining?",
+            "kind": "decided",
+            "content": "Whole 12-person team",
+            "alternatives": [
+              {
+                "label": "Core four teammates",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Whole 12-person team",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Team and contractors",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Six teammates",
+                "description": "The revised group size.",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Whole 12-person team",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "meal",
+            "title": "What kind of lunch?",
+            "kind": "decided",
+            "content": "Takeaway together",
+            "alternatives": [
+              {
+                "label": "Sit-down lunch",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Casual café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway together",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Takeaway together",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "budget",
+            "title": "What can we spend?",
+            "kind": "decided",
+            "content": "€25 per person",
+            "alternatives": [
+              {
+                "label": "€25 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€35 per person",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€50 per person",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€25 per person",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "headcount",
+            "title": "How many people?",
+            "kind": "decided",
+            "content": "Twelve attendees",
+            "alternatives": [
+              {
+                "label": "Four people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Six people",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Twelve people",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Twelve people",
+            "groupLabel": "attendance"
+          },
+          {
+            "id": "diet",
+            "title": "Dietary needs for all twelve?",
+            "kind": "assumption",
+            "content": "One vegetarian · one vegan",
+            "alternatives": [
+              {
+                "label": "No restrictions",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "One vegetarian and one vegan",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Still checking",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "All twelve vegan",
+                "description": "Every meal must be vegan.",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "One vegetarian and one vegan",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "venue",
+            "title": "Where shall we eat?",
+            "kind": "assumption",
+            "content": "Takeaway near the office",
+            "alternatives": [
+              {
+                "label": "Walkable café",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Italian restaurant",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Takeaway near the office",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Steakhouse without vegan meals",
+                "description": "Unsuitable when vegan meals are required.",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Takeaway near the office",
+            "groupLabel": "meal-location"
+          },
+          {
+            "id": "amount",
+            "title": "Total lunch allowance",
+            "kind": "decided",
+            "content": "€300 total",
+            "alternatives": [
+              {
+                "label": "€300 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€420 total",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "€600 total",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "€300 total",
+            "groupLabel": "spending"
+          },
+          {
+            "id": "drinks",
+            "title": "Include drinks?",
+            "kind": "assumption",
+            "content": "Include soft drinks",
+            "alternatives": [
+              {
+                "label": "Include soft drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Include all drinks",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Food only",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Include soft drinks",
+            "groupLabel": "meal-options"
+          },
+          {
+            "id": "vegan",
+            "title": "A proper vegan main?",
+            "kind": "decided",
+            "content": "A substantial vegan main required",
+            "alternatives": [
+              {
+                "label": "One vegan main required",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "More than one vegan option",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Not needed",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "One vegan main required",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "allergies",
+            "title": "Any allergies?",
+            "kind": "assumption",
+            "content": "No known allergies",
+            "alternatives": [
+              {
+                "label": "No known allergies",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Need to check",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Specific allergy requirements",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "No known allergies",
+            "groupLabel": "dietary-needs"
+          },
+          {
+            "id": "timing",
+            "title": "When are we going?",
+            "kind": "decided",
+            "content": "Friday at noon",
+            "alternatives": [
+              {
+                "label": "Friday at noon",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Another weekday",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Still flexible",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Friday at noon",
+            "groupLabel": "meal-schedule"
+          },
+          {
+            "id": "pickup",
+            "title": "Where to collect?",
+            "kind": "assumption",
+            "content": "Walkable collection",
+            "alternatives": [
+              {
+                "label": "Walkable collection",
+                "description": "Provisional starting point; not confirmed.",
+                "recommended": false
+              },
+              {
+                "label": "Need to discuss",
+                "description": "Keep the detail open.",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Walkable collection",
+            "groupLabel": "food-pickup"
+          },
+          {
+            "id": "location",
+            "title": "Where will we gather?",
+            "kind": "assumption",
+            "content": "Office common room",
+            "alternatives": [
+              {
+                "label": "Office common room",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Nearby park",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "At the venue",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Office common room",
+            "groupLabel": "meal-location"
+          },
+          {
+            "id": "capacity",
+            "title": "Enough room for everyone?",
+            "kind": "assumption",
+            "content": "Space for twelve",
+            "alternatives": [
+              {
+                "label": "Space for twelve",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Split into two groups",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Use another location",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Space for twelve",
+            "groupLabel": "meal-location"
+          },
+          {
+            "id": "deadline",
+            "title": "When should we order?",
+            "kind": "assumption",
+            "content": "Thursday afternoon",
+            "alternatives": [
+              {
+                "label": "Thursday afternoon",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Friday morning",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Order on arrival",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Thursday afternoon",
+            "groupLabel": "meal-schedule"
+          },
+          {
+            "id": "payment",
+            "title": "How will we pay?",
+            "kind": "assumption",
+            "content": "One team payment",
+            "alternatives": [
+              {
+                "label": "One team payment",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Everyone pays separately",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "One team payment"
+          },
+          {
+            "id": "transport",
+            "title": "How will we collect?",
+            "kind": "assumption",
+            "content": "Walk together",
+            "alternatives": [
+              {
+                "label": "Walk together",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "One person collects",
+                "description": "",
+                "recommended": false
+              },
+              {
+                "label": "Delivery",
+                "description": "",
+                "recommended": false
+              }
+            ],
+            "selectedAlternative": "Walk together",
+            "groupLabel": "food-pickup"
+          }
+        ],
+        "edges": [
+          {
+            "id": "parent-people",
+            "kind": "parent",
+            "from": "topic",
+            "to": "people"
+          },
+          {
+            "id": "parent-headcount",
+            "kind": "parent",
+            "from": "people",
+            "to": "headcount"
+          },
+          {
+            "id": "parent-diet",
+            "kind": "parent",
+            "from": "people",
+            "to": "diet"
+          },
+          {
+            "id": "parent-vegan",
+            "kind": "parent",
+            "from": "diet",
+            "to": "vegan"
+          },
+          {
+            "id": "parent-allergies",
+            "kind": "parent",
+            "from": "diet",
+            "to": "allergies"
+          },
+          {
+            "id": "parent-meal",
+            "kind": "parent",
+            "from": "topic",
+            "to": "meal"
+          },
+          {
+            "id": "parent-venue",
+            "kind": "parent",
+            "from": "meal",
+            "to": "venue"
+          },
+          {
+            "id": "parent-budget",
+            "kind": "parent",
+            "from": "topic",
+            "to": "budget"
+          },
+          {
+            "id": "parent-amount",
+            "kind": "parent",
+            "from": "budget",
+            "to": "amount"
+          },
+          {
+            "id": "parent-drinks",
+            "kind": "parent",
+            "from": "budget",
+            "to": "drinks"
+          },
+          {
+            "id": "parent-timing",
+            "kind": "parent",
+            "from": "topic",
+            "to": "timing"
+          },
+          {
+            "id": "parent-pickup",
+            "kind": "parent",
+            "from": "venue",
+            "to": "pickup"
+          },
+          {
+            "id": "parent-location",
+            "kind": "parent",
+            "from": "meal",
+            "to": "location"
+          },
+          {
+            "id": "parent-capacity",
+            "kind": "parent",
+            "from": "location",
+            "to": "capacity"
+          },
+          {
+            "id": "parent-deadline",
+            "kind": "parent",
+            "from": "pickup",
+            "to": "deadline"
+          },
+          {
+            "id": "parent-payment",
+            "kind": "parent",
+            "from": "budget",
+            "to": "payment"
+          },
+          {
+            "id": "parent-transport",
+            "kind": "parent",
+            "from": "pickup",
+            "to": "transport"
+          },
+          {
+            "id": "input-headcount-amount",
+            "kind": "input",
+            "from": "headcount",
+            "to": "amount",
+            "rationale": "Headcount multiplies the per-person allowance to produce the total."
+          },
+          {
+            "id": "input-budget-amount",
+            "kind": "input",
+            "from": "budget",
+            "to": "amount",
+            "rationale": "The per-person allowance is the other factor in the total."
+          },
+          {
+            "id": "input-headcount-capacity",
+            "kind": "input",
+            "from": "headcount",
+            "to": "capacity",
+            "rationale": "Room capacity is checked against the confirmed number attending."
+          },
+          {
+            "id": "input-venue-deadline",
+            "kind": "input",
+            "from": "venue",
+            "to": "deadline",
+            "rationale": "The provider determines how far ahead a group order is needed."
+          },
+          {
+            "id": "input-location-pickup",
+            "kind": "input",
+            "from": "location",
+            "to": "pickup",
+            "rationale": "The gathering location is the reference point for collection distance."
+          },
+          {
+            "id": "input-amount-topic",
+            "kind": "input",
+            "from": "amount",
+            "to": "topic",
+            "rationale": "The total allowance contributes to the overall lunch plan."
+          },
+          {
+            "id": "input-meal-topic",
+            "kind": "input",
+            "from": "meal",
+            "to": "topic",
+            "rationale": "The chosen meal format contributes to the overall lunch plan."
+          },
+          {
+            "id": "vegan-meals",
+            "kind": "constraint",
+            "label": "Suitable meals",
+            "rule": "The provider must supply a substantial meal suitable for each attendee's dietary requirements.",
+            "strength": "requirement",
+            "participants": [
+              {
+                "nodeId": "diet"
+              },
+              {
+                "nodeId": "vegan"
+              },
+              {
+                "nodeId": "venue"
+              }
+            ]
+          },
+          {
+            "id": "vegan-exclusion",
+            "kind": "constraint",
+            "label": "Incompatible choices",
+            "rule": "All twelve vegan cannot be combined with a steakhouse that has no vegan meals.",
+            "strength": "requirement",
+            "participants": [
+              {
+                "nodeId": "diet",
+                "alternative": "All twelve vegan"
+              },
+              {
+                "nodeId": "venue",
+                "alternative": "Steakhouse without vegan meals"
+              }
+            ]
+          },
+          {
+            "id": "spending-limit",
+            "kind": "constraint",
+            "label": "Within allowance",
+            "rule": "Food and included drinks for the confirmed headcount must fit within the total allowance.",
+            "strength": "requirement",
+            "participants": [
+              {
+                "nodeId": "budget"
+              },
+              {
+                "nodeId": "amount"
+              },
+              {
+                "nodeId": "drinks"
+              },
+              {
+                "nodeId": "headcount"
+              }
+            ]
+          },
+          {
+            "id": "allergy-check",
+            "kind": "constraint",
+            "label": "Check allergies",
+            "rule": "Before ordering, check all attendees' allergy requirements and the provider's ability to accommodate them.",
+            "strength": "requirement",
+            "participants": [
+              {
+                "nodeId": "allergies"
+              },
+              {
+                "nodeId": "venue"
+              },
+              {
+                "nodeId": "deadline"
+              }
+            ]
+          },
+          {
+            "id": "collection",
+            "kind": "constraint",
+            "label": "Practical collection",
+            "rule": "Collection transport must be feasible for the route and the volume of twelve meals.",
+            "strength": "requirement",
+            "participants": [
+              {
+                "nodeId": "headcount"
+              },
+              {
+                "nodeId": "pickup"
+              },
+              {
+                "nodeId": "transport"
+              }
+            ]
+          },
+          {
+            "id": "walkability",
+            "kind": "constraint",
+            "label": "Prefer a short walk",
+            "rule": "For this illustrative relaxed-lunch scenario, the agent provisionally favours a short walk between the gathering point and collection; this is not a confirmed human preference.",
+            "strength": "preference",
+            "participants": [
+              {
+                "nodeId": "location"
+              },
+              {
+                "nodeId": "pickup"
+              },
+              {
+                "nodeId": "venue"
+              }
+            ]
+          }
+        ]
+      },
+      "commit": {
+        "title": "Map lunch relationships",
+        "kind": "graphUpdated"
+      },
+      "confirmedChanges": []
+    }
+  ]
+}

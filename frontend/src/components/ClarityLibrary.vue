@@ -128,7 +128,7 @@ onUnmounted(() => document.removeEventListener('keydown', keyboard));
           <button v-for="item in items" :key="item.id" class="clarity-card" :data-clarification-id="item.id" :tabindex="item.id === state.selectedId ? 0 : -1" @focus="state.selectedId = item.id" @click="open(item.id)">
             <GraphThumbnail :workspace="item"/>
             <div class="card-body"><h2>{{ item.title }}</h2><p>{{ item.description || 'An open space to develop your next decision.' }}</p></div>
-            <div class="card-footer"><span>{{ item.questions.length }} questions · {{ counts(item).decided }} decided · {{ counts(item).open }} open<span v-if="counts(item).review"> · {{ counts(item).review }} to check</span><span v-if="counts(item).proposals"> · {{ counts(item).proposals }} to review</span></span><i class="pi pi-arrow-right" aria-hidden="true"/></div>
+            <div class="card-footer"><span>{{ item.commits.at(-1)?.graph.nodes.length || 0 }} nodes · {{ counts(item).decided }} decided<span v-if="counts(item).assumptions"> · {{ counts(item).assumptions }} assumptions</span></span><i class="pi pi-arrow-right" aria-hidden="true"/></div>
           </button>
         </div>
         <section v-else-if="!loading" class="empty-library">
