@@ -1,4 +1,7 @@
 *
+!frontend/
+frontend/*
+!frontend/package-lock.json
 !target/
 target/*
 !target/release/
