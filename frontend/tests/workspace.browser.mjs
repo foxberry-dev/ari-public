@@ -1861,11 +1861,13 @@ test('mobile library scrolls its intro and keeps opaque search and deletion cont
     await page.setViewportSize({ width, height: 844 });
     await page.goto(base);
     await page.waitForFunction(() => document.querySelectorAll('.clarity-card').length === 7);
+    assert.equal(await page.locator('.library-toolbar').evaluate(el => getComputedStyle(el).boxShadow), 'none');
     assert.equal(await page.locator('.library-scroll').evaluate(el => el.scrollTop), 0);
     const introTop = (await page.locator('.page-intro').boundingBox()).y;
     await page.locator('.library-scroll').evaluate(el => el.scrollTop = 500);
     await page.waitForFunction(() => document.querySelector('.library-scroll').scrollTop >= 500);
 
+    await page.waitForFunction(() => getComputedStyle(document.querySelector('.library-toolbar')).boxShadow !== 'none');
     const geometry = await page.locator('.library-toolbar').evaluate(strip => {
       const rect = strip.getBoundingClientRect();
       const style = getComputedStyle(strip);

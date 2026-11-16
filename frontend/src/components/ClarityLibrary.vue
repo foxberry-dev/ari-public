@@ -14,6 +14,8 @@ const state = defineModel<{ query: string; selectedId: string; scrollTop: number
 const search = ref<HTMLInputElement>();
 const grid = ref<HTMLElement>();
 const scroller = ref<HTMLElement>();
+const toolbar = ref<HTMLElement>();
+const stuck = ref(false);
 const deleteTargets = ref<Workspace[]>([]);
 const deleteDialog = ref(false);
 const deleting = ref(false);
@@ -26,6 +28,12 @@ const items = computed(() => props.items
   .filter(item => `${item.title} ${item.description}`.toLowerCase().includes(term.value))
   .toSorted((a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id)));
 const cards = () => [...(grid.value?.querySelectorAll<HTMLButtonElement>('.clarity-card') || [])];
+
+function rememberScroll() {
+  state.value.scrollTop = scroller.value?.scrollTop || 0;
+  stuck.value = !!scroller.value && !!toolbar.value && state.value.scrollTop > 0
+    && toolbar.value.getBoundingClientRect().top <= scroller.value.getBoundingClientRect().top;
+}
 
 function focusCard(position: number, reveal = true, behavior: ScrollBehavior = 'instant') {
   const card = cards()[position];
@@ -172,11 +180,11 @@ onUnmounted(() => document.removeEventListener('keydown', keyboard));
 <template>
   <main class="library" :aria-busy="loading" :style="{ '--overview-scroll': `${state.scrollTop}px` }">
     <DottedBackdrop/>
-    <div ref="scroller" class="library-scroll" role="region" aria-label="Clarity library" @scroll="state.scrollTop = scroller?.scrollTop || 0">
+    <div ref="scroller" class="library-scroll" role="region" aria-label="Clarity library" @scroll="rememberScroll">
     <div class="library-intro library-content">
       <div class="page-intro"><p class="eyebrow">Your clarity library</p><h1>Good decisions start here.<br><span>Make the next step clear.</span></h1><p class="lede">Connected questions, published by your agent. Explore the choices and keep the reasoning.</p></div>
     </div>
-    <div class="library-toolbar library-content">
+    <div ref="toolbar" class="library-toolbar library-content" :class="{ 'is-stuck': stuck }">
       <label class="search"><i class="pi pi-search" aria-hidden="true"/><input ref="search" v-model="state.query" type="search" placeholder="Search titles and descriptions" aria-label="Search clarifications" autocomplete="off" @keydown="searchKeyboard"><kbd aria-hidden="true">/</kbd></label>
       <div class="library-results"><p class="result-count" role="status">{{ loading ? 'Loading your clarifications…' : `${items.length} clarification${items.length === 1 ? '' : 's'}${term ? ' found' : ''}` }}</p><Button v-if="props.items.length" class="delete-all" label="Delete all" icon="pi pi-trash" severity="danger" text size="small" :disabled="loading || deleteDialog" aria-controls="delete-clarification-dialog" :aria-expanded="deleteDialog && deleteAll" @click="confirmDeletion(props.items, true)"/></div>
     </div>
@@ -250,7 +258,7 @@ onUnmounted(() => document.removeEventListener('keydown', keyboard));
 .empty-library h2{margin:20px 0 10px;font-size:20.25px;color:var(--text)}
 .empty-library p{max-width:600px;margin:12px auto;font-size:15px}
 @media(max-width:1050px){.card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:700px){.library-content{padding-inline:16px}.library-intro{padding-top:20px}.library-toolbar{position:sticky;top:0;z-index:5;padding-top:12px;background:#101113}.library-scroll{scroll-padding-top:124px}.page-intro{margin-bottom:4px}.page-intro h1{font-size:30px}}
+@media(max-width:700px){.library-content{padding-inline:16px}.library-intro{padding-top:20px}.library-toolbar{position:sticky;top:0;z-index:5;padding-top:12px;background:#101113}.library-toolbar.is-stuck{box-shadow:0 6px 10px -6px #0009}.library-scroll{scroll-padding-top:124px}.page-intro{margin-bottom:4px}.page-intro h1{font-size:30px}}
 @media(max-width:650px){.card-grid{grid-template-columns:minmax(0,1fr)}}
 @media(forced-colors:active){.library{background-image:none}.clarity-card:focus-visible::after{border-color:Highlight}}
 </style>
