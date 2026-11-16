@@ -6,6 +6,7 @@ import GraphWorkspace from './components/GraphWorkspace.vue';
 import RelatedLinks from './components/RelatedLinks.vue';
 import ShortcutReference from './components/ShortcutReference.vue';
 import ReferenceNotification from './components/ReferenceNotification.vue';
+import DeletionNotification from './components/DeletionNotification.vue';
 import { api } from './api';
 import { loadCherUrl, returnToCher } from './cher-navigation';
 import { changeTheme } from './graph-presentation';
@@ -20,6 +21,7 @@ const fullscreen = ref(false);
 const shortcuts = ref<InstanceType<typeof ShortcutReference>>();
 const relatedLinks = ref<InstanceType<typeof RelatedLinks>>();
 const notification = ref<InstanceType<typeof ReferenceNotification>>();
+const deletionNotification = ref<InstanceType<typeof DeletionNotification>>();
 let pendingKey = '', pendingUntil = 0;
 const loading = ref(true);
 const displayedId = ref('');
@@ -137,8 +139,9 @@ onUnmounted(() => { disposeScrollbars?.(); events?.close(); clearInterval(interv
       <span class="connection" :title="connected ? 'Live graph updates are connected.' : 'Reconnecting to the Ari server'"><i class="pi" :class="connected ? 'pi-check-circle good-text' : 'pi-exclamation-circle gold-text'"/><span>{{ connected ? 'Connected' : 'Reconnecting' }}</span></span>
     </div></header>
     <ReferenceNotification ref="notification"/>
+    <DeletionNotification ref="deletionNotification" @changed="refresh"/>
     <div v-if="error" class="error-notice" role="alert"><span>{{ error }}</span><button @click="refresh">Retry</button></div>
-    <ClarityLibrary v-if="!workspace && !displayedId" v-model:state="libraryState" :items="items" :loading="loading" @open="open"/>
+    <ClarityLibrary v-if="!workspace && !displayedId" v-model:state="libraryState" :items="items" :loading="loading" @open="open" @changed="refresh" @deleted="(receipt, titles) => deletionNotification?.deleted(receipt, titles)"/>
     <main v-else-if="!workspace" class="container loading-page"><p>This clarification could not be opened.</p><button @click="home">Back to library</button></main>
     <GraphWorkspace v-else ref="graphWorkspace" v-model:fullscreen="fullscreen" :key="workspace.id" :workspace="workspace" @copy-reference="notification?.copy($event)"/>
   </div>

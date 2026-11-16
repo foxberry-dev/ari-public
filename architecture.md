@@ -1,6 +1,6 @@
 # Ari
 
-Ari is a local, read-only view of an agent-driven decision graph. A Rust daemon owns SQLite, HTTP, MCP, and live browser notifications. Vue provides a library and three views of each graph: Tree, Grouped, and Radial. Conversation happens with the agent outside Ari.
+Ari is a local view of an agent-driven decision graph. Graph content is read-only in the viewer; the library supports clarification deletion and Undo. A Rust daemon owns SQLite, HTTP, MCP, and live browser notifications. Vue provides a library and three views of each graph: Tree, Grouped, and Radial. Conversation happens with the agent outside Ari.
 
 ## Boundaries
 
@@ -11,7 +11,7 @@ Ari is a local, read-only view of an agent-driven decision graph. A Rust daemon 
 | `src/revision_validation.rs` | Explicit acknowledgement of changes to previously confirmed nodes |
 | `src/relationships.rs` | Typed relationships, parent-tree validation, independent input-cycle checks, and constraint scope validation |
 | `src/service.rs` | Revision-checked SQLite graph transactions and post-commit notifications |
-| `src/http.rs` | Loopback guards, read-only REST, SSE, and embedded frontend |
+| `src/http.rs` | Loopback guards, graph reads, library deletion/Undo, SSE, and embedded frontend |
 | `src/mcp.rs` | Agent discovery, clarification creation, and graph commit publication |
 | `frontend/src/graph.ts` | Tree, island and ring layouts, edge geometry, and snapshot differences |
 | `frontend/src/relationships.ts` | Relationship traversal, historical dependency interpretation, and relationship differences |
@@ -40,7 +40,7 @@ Pre-commit clarification documents are exposed with a deterministic baseline sna
 4. The browser receives `/api/events` and refetches the clarification.
 5. Viewers at the latest commit follow new commits. Viewers browsing history stay at their selected commit and can return to Latest.
 
-The browser makes read-only requests. It has no answer forms, agent requests, approval workflow, event queue, or listener. Current view shows confirmed nodes neutrally and provisional assumptions in muted purple. Changed compares it with its immediate predecessor: green additions, purple added assumptions, blue resolved assumptions, amber revised answers, and pink removals. Removed nodes are temporary comparison representations, not part of the selected snapshot. Node details and conversation history are local navigation state. Keyboard revision navigation animates the camera to fit changed nodes visible in the selected display mode. Changed view includes comparison removals; Current view frames retained changes and additions. Track mode defaults on and persists for the browser session. At Latest, live publications frame changed nodes in either display mode when Track is enabled. Historical browsing keeps its selected revision and camera. Pointer revision selection, untracked live updates, and opening details preserve the camera; Fit graph explicitly reframes the graph. Node positions and edge endpoints interpolate on one animation clock, including interrupted transitions, with immediate positioning for reduced-motion preferences.
+The browser reads graph content and supports library deletion/Undo. It has no answer forms, agent requests, approval workflow, event queue, or listener. Current view shows confirmed nodes neutrally and provisional assumptions in muted purple. Changed compares it with its immediate predecessor: green additions, purple added assumptions, blue resolved assumptions, amber revised answers, and pink removals. Removed nodes are temporary comparison representations, not part of the selected snapshot. Node details and conversation history are local navigation state. Keyboard revision navigation animates the camera to fit changed nodes visible in the selected display mode. Changed view includes comparison removals; Current view frames retained changes and additions. Track mode defaults on and persists for the browser session. At Latest, live publications frame changed nodes in either display mode when Track is enabled. Historical browsing keeps its selected revision and camera. Pointer revision selection, untracked live updates, and opening details preserve the camera; Fit graph explicitly reframes the graph. Node positions and edge endpoints interpolate on one animation clock, including interrupted transitions, with immediate positioning for reduced-motion preferences.
 
 HTTP and MCP bind only to loopback. Authored text is inert and rendered through escaped Vue interpolation. Host and origin guards apply to every route. No model runs inside Ari.
 
@@ -66,3 +66,7 @@ checkout. The container includes this runtime. Parameter semantics belong in
 [agent instructions](agent-instructions.md#references-and-graph-exports).
 
 Clarification-wide links are ordered label/url references, validated as at most 50 absolute HTTP(S) URLs without credentials or control characters. Create accepts links; publications preserve them when omitted and replace them when supplied ([] clears). They persist independently of individual graph snapshots and are returned by get_clarification and HTTP reads. The header popover shows all references with browser-loaded site-origin favicons; the server does not fetch link targets.
+
+## Library deletion
+
+The library exposes per-card deletion, Delete all (including search-hidden items), and an eight-second Undo notification. POST `/api/workspaces/delete` accepts an array of `{id, expectedRevision}` targets. The service checks every revision and deletes the whole set atomically. A missing or stale target rolls back the operation. The receipt contains an opaque `token` and `expiresAt` in Unix milliseconds. POST `/api/deletions/{token}/restore` restores the complete saved documents atomically, preserving graph history and rejecting reused IDs. Deletion and restore notify viewers only after SQLite commits. Temporary backups are unavailable after eight seconds and purged by a scheduled task or on startup. The viewer cannot edit graphs or publish decisions.

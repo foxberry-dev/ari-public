@@ -1766,3 +1766,86 @@ test('clarification-wide links persist through MCP publications and use a compac
   await trigger.waitFor({state:'hidden'});
   assert.deepEqual((await tool('get_clarification',{item:'related-links'})).links,[]);
 });
+
+test('library card deletion matches the shared control and supports confirmation, undo, and expiry', { timeout: 30_000 }, async t => {
+  const { base, api, tool } = await fixture(t);
+  await tool('get_context');
+  await tool('create_clarification', { id: 'delete-one', title: 'Disposable plan', graph: exampleGraph(), commit: { title: 'Stage plan', kind: 'topicStaged' } });
+  const saved = await api('/workspaces/delete-one');
+  const page = await browserFor(t);
+  await page.goto(base);
+  const remove = page.getByRole('button', { name: 'Delete Disposable plan', exact: true });
+  await remove.waitFor();
+  assert.deepEqual(await remove.evaluate(button => {
+    const style = getComputedStyle(button), icon = button.querySelector('.pi-trash');
+    const bounds = button.getBoundingClientRect(), card = button.parentElement.getBoundingClientRect();
+    return { top: bounds.top - card.top, right: card.right - bounds.right, width: bounds.width, height: bounds.height,
+      radius: style.borderRadius, background: style.backgroundColor, icon: !!icon };
+  }), { top: 10, right: 10, width: 32, height: 32, radius: '6px', background: 'rgb(42, 45, 48)', icon: true });
+  await remove.click();
+  const dialog = page.getByRole('dialog', { name: 'Delete clarification?', exact: true });
+  await dialog.waitFor();
+  assert.deepEqual(await dialog.evaluate(element => {
+    const padding = ['.p-dialog-header', '.p-dialog-content', '.p-dialog-footer'].map(selector => getComputedStyle(element.querySelector(selector)).padding);
+    return { padding, gap: getComputedStyle(element.querySelector('.p-dialog-footer')).gap };
+  }), { padding: ['20px', '20px', '20px'], gap: '10px' });
+  assert.match(await dialog.innerText(), /all its revision history/);
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page.waitForFunction(() => !document.querySelector('[role="dialog"]'));
+  assert.equal((await api('/workspaces')).length, 1);
+  await page.keyboard.press('x');
+  await dialog.waitFor();
+  const confirm = dialog.getByRole('button', { name: 'Delete clarification', exact: true });
+  await confirm.focus();
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await page.waitForFunction(() => getComputedStyle(document.activeElement).backgroundColor === 'rgb(255, 155, 172)');
+  await confirm.click();
+  await page.waitForFunction(() => !document.querySelector('.clarity-card'));
+  assert.equal((await api('/workspaces')).length, 0);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await remove.waitFor();
+  assert.deepEqual(await api('/workspaces/delete-one'), saved);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await remove.click();
+  await dialog.waitFor();
+  assert.ok((await dialog.boundingBox()).width <= 358);
+  await page.keyboard.press('Control+[');
+  await dialog.waitFor({ state: 'detached' });
+  await remove.click();
+  await dialog.getByRole('button', { name: 'Delete clarification', exact: true }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Undo', exact: true }).waitFor({ state: 'detached', timeout: 11_000 });
+  await page.reload();
+  await page.getByRole('heading', { name: 'A place for the next decision' }).waitFor();
+});
+
+test('delete all includes hidden cards and stale deletion refreshes before another attempt', { timeout: 30_000 }, async t => {
+  const { base, api, tool } = await fixture(t);
+  await tool('get_context');
+  for (const id of ['visible', 'hidden']) {
+    await tool('create_clarification', { id, title: `${id} plan`, graph: exampleGraph(), commit: { title: 'Stage plan', kind: 'topicStaged' } });
+  }
+  const page = await browserFor(t);
+  await page.goto(base);
+  const search = page.getByRole('searchbox', { name: 'Search clarifications' });
+  await search.fill('visible');
+  await page.getByRole('button', { name: 'Delete visible plan', exact: true }).click();
+  const saved = await tool('get_clarification', { item: 'visible' });
+  await tool('publish_graph_commit', { clarificationId: 'visible', expectedRevision: saved.revision, graph: saved.currentGraph, commit: { title: 'Review plan', kind: 'graphUpdated' } });
+  await page.getByRole('dialog').getByRole('button', { name: 'Delete clarification', exact: true }).click();
+  await page.getByRole('dialog').getByRole('alert').waitFor();
+  assert.equal((await api('/workspaces')).length, 2);
+  await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete all', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Delete all clarifications?', exact: true });
+  assert.match(await dialog.innerText(), /including clarifications hidden by search/);
+  await dialog.getByRole('button', { name: 'Delete all clarifications', exact: true }).click();
+  await page.getByRole('button', { name: 'Undo', exact: true }).waitFor();
+  assert.deepEqual(await api('/workspaces'), []);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await page.getByRole('button', { name: 'Delete visible plan', exact: true }).waitFor();
+  await search.fill('');
+  await page.getByRole('button', { name: 'Delete hidden plan', exact: true }).waitFor();
+  assert.equal((await api('/workspaces')).length, 2);
+});

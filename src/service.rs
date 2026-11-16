@@ -34,6 +34,20 @@ pub struct Service {
     pub updates: broadcast::Sender<()>,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DeleteTarget {
+    pub id: String,
+    pub expected_revision: u64,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Deletion {
+    pub token: String,
+    pub expires_at: i64,
+}
+
 impl Service {
     pub async fn open(path: &Path) -> Result<Self, Error> {
         let options = SqliteConnectOptions::new()
@@ -46,10 +60,18 @@ impl Service {
         )
         .execute(&mut db)
         .await?;
-        Ok(Self {
+        sqlx::query("CREATE TABLE IF NOT EXISTS deletions (token TEXT PRIMARY KEY, documents TEXT NOT NULL, expires_at INTEGER NOT NULL)")
+            .execute(&mut db).await?;
+        sqlx::query("DELETE FROM deletions WHERE expires_at <= ?")
+            .bind(now())
+            .execute(&mut db)
+            .await?;
+        let service = Self {
             db: Arc::new(Mutex::new(db)),
             updates: broadcast::channel(64).0,
-        })
+        };
+        service.schedule_deletion_cleanup();
+        Ok(service)
     }
 
     fn decode(document: &str) -> Result<Workspace, Error> {
@@ -168,5 +190,91 @@ impl Service {
         drop(db);
         let _ = self.updates.send(());
         Ok(w)
+    }
+
+    pub async fn delete(&self, targets: Vec<DeleteTarget>) -> Result<Deletion, Error> {
+        if targets.is_empty() {
+            return Err(Error::Invalid("Select at least one clarification".into()));
+        }
+        let mut db = self.db.lock().await;
+        let mut tx = db.begin().await?;
+        let mut documents = Vec::new();
+        for target in targets {
+            let workspace = Self::read(&mut tx, &target.id).await?;
+            if workspace.revision != target.expected_revision {
+                return Err(Error::RevisionConflict(workspace.revision));
+            }
+            sqlx::query("DELETE FROM workspaces WHERE id=?")
+                .bind(&target.id)
+                .execute(&mut *tx)
+                .await?;
+            documents.push(workspace);
+        }
+        let receipt = Deletion {
+            token: Uuid::new_v4().to_string(),
+            expires_at: now() + 8_000,
+        };
+        sqlx::query("INSERT INTO deletions (token, documents, expires_at) VALUES (?, ?, ?)")
+            .bind(&receipt.token)
+            .bind(serde_json::to_string(&documents)?)
+            .bind(receipt.expires_at)
+            .execute(&mut *tx)
+            .await?;
+        tx.commit().await?;
+        drop(db);
+        let _ = self.updates.send(());
+        self.schedule_deletion_cleanup();
+        Ok(receipt)
+    }
+
+    fn schedule_deletion_cleanup(&self) {
+        let cleanup = self.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(std::time::Duration::from_secs(8)).await;
+            if let Err(error) = cleanup.purge_deletions().await {
+                eprintln!("Cannot expire deletion backups: {error:?}");
+            }
+        });
+    }
+
+    async fn purge_deletions(&self) -> Result<(), Error> {
+        sqlx::query("DELETE FROM deletions WHERE expires_at <= ?")
+            .bind(now())
+            .execute(&mut *self.db.lock().await)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn restore(&self, token: &str) -> Result<(), Error> {
+        let mut db = self.db.lock().await;
+        let mut tx = db.begin().await?;
+        let documents: String =
+            sqlx::query_scalar("SELECT documents FROM deletions WHERE token=? AND expires_at > ?")
+                .bind(token)
+                .bind(now())
+                .fetch_optional(&mut *tx)
+                .await?
+                .ok_or_else(|| Error::Invalid("Undo has expired; check the library".into()))?;
+        let documents: Vec<Workspace> = serde_json::from_str(&documents)?;
+        for document in documents {
+            let exists: i64 = sqlx::query_scalar("SELECT count(*) FROM workspaces WHERE id=?")
+                .bind(&document.id)
+                .fetch_one(&mut *tx)
+                .await?;
+            if exists > 0 {
+                return Err(Error::Conflict(
+                    "A clarification with this ID already exists; undo would overwrite it".into(),
+                ));
+            }
+            Self::save(&mut tx, &document).await?;
+        }
+        sqlx::query("DELETE FROM deletions WHERE token=?")
+            .bind(token)
+            .execute(&mut *tx)
+            .await?;
+        tx.commit().await?;
+        drop(db);
+        let _ = self.updates.send(());
+        Ok(())
     }
 }

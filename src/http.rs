@@ -9,7 +9,7 @@ use axum::{
         IntoResponse, Response, Sse,
         sse::{Event, KeepAlive},
     },
-    routing::get,
+    routing::{get, post},
 };
 use futures_util::stream;
 use rust_embed::RustEmbed;
@@ -40,7 +40,7 @@ impl IntoResponse for Error {
             Error::RevisionConflict(revision) => (
                 StatusCode::CONFLICT,
                 format!(
-                    "Clarification is at revision {revision}; read the latest graph before publishing"
+                    "Clarification is at revision {revision}; read the latest clarification before retrying"
                 ),
             ),
             Error::Storage(error) => {
@@ -111,6 +111,21 @@ async fn detail(
     let mut document = serde_json::to_value(&workspace)?;
     document["nodeIndex"] = serde_json::to_value(workspace.node_index())?;
     Ok(Json(document))
+}
+
+async fn delete(
+    State(s): State<AppState>,
+    Json(targets): Json<Vec<crate::service::DeleteTarget>>,
+) -> Result<Json<crate::service::Deletion>, Error> {
+    Ok(Json(s.service.delete(targets).await?))
+}
+
+async fn restore(
+    State(s): State<AppState>,
+    Path(token): Path<String>,
+) -> Result<Json<serde_json::Value>, Error> {
+    s.service.restore(&token).await?;
+    Ok(Json(serde_json::json!({ "restored": true })))
 }
 async fn export_graph(
     State(s): State<AppState>,
@@ -214,6 +229,8 @@ pub fn router(service: Service, port: u16, cher_url: Option<String>) -> Router {
         .route("/api/navigation", get(navigation))
         .route("/api/context", get(context))
         .route("/api/workspaces", get(list))
+        .route("/api/workspaces/delete", post(delete))
+        .route("/api/deletions/{token}/restore", post(restore))
         .route("/api/workspaces/{id}", get(detail))
         .route("/api/workspaces/{id}/export", get(export_graph))
         .route("/api/events", get(events))

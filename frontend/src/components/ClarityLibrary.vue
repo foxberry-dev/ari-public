@@ -4,13 +4,22 @@ import type { Workspace } from '../model';
 import { counts } from '../model';
 import DottedBackdrop from './DottedBackdrop.vue';
 import GraphThumbnail from './GraphThumbnail.vue';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import { api } from '../api';
 
 const props = defineProps<{ items: Workspace[]; loading: boolean }>();
-const emit = defineEmits<{ open: [id: string] }>();
+const emit = defineEmits<{ open: [id: string]; changed: []; deleted: [receipt: { token: string; expiresAt: number }, titles: string[]] }>();
 const state = defineModel<{ query: string; selectedId: string; scrollTop: number }>('state', { required: true });
 const search = ref<HTMLInputElement>();
 const grid = ref<HTMLElement>();
 const scroller = ref<HTMLElement>();
+const deleteTargets = ref<Workspace[]>([]);
+const deleteDialog = ref(false);
+const deleting = ref(false);
+const deleteAll = ref(false);
+const deleteError = ref('');
+const focusDeleteConfirmation = ref(false);
 let restoreFocus = !!state.value.selectedId;
 const term = computed(() => state.value.query.trim().toLowerCase());
 const items = computed(() => props.items
@@ -30,8 +39,42 @@ function focusSelected() {
 }
 
 function open(id: string) {
+  if (deleteDialog.value) return;
   state.value.selectedId = id;
   emit('open', id);
+}
+
+function confirmDeletion(targets: Workspace[], all = false, focusConfirmation = false) {
+  if (deleteDialog.value || props.loading || !targets.length) return;
+  deleteTargets.value = targets.map(item => ({ ...item }));
+  deleteAll.value = all;
+  deleteError.value = '';
+  focusDeleteConfirmation.value = focusConfirmation;
+  deleteDialog.value = true;
+}
+
+async function deleteClarifications() {
+  if (deleting.value || deleteError.value) return;
+  deleting.value = true;
+  try {
+    const receipt = await api<{ token: string; expiresAt: number }>('/workspaces/delete', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(deleteTargets.value.map(item => ({ id: item.id, expectedRevision: item.revision }))),
+    });
+    emit('deleted', receipt, deleteTargets.value.map(item => item.title));
+    deleteDialog.value = false;
+  } catch (cause) {
+    deleteError.value = `${(cause as Error).message}. Close this dialog and check the library before trying again.`;
+    void nextTick(() => document.querySelector<HTMLButtonElement>('#delete-clarification-dialog [autofocus]')?.focus());
+  } finally {
+    deleting.value = false;
+    emit('changed');
+  }
+}
+
+function restoreDeleteFocus() {
+  if (items.value.length) focusSelected();
+  else search.value?.focus({ preventScroll: true });
 }
 
 function dismissSearch() {
@@ -54,6 +97,13 @@ function searchKeyboard(event: KeyboardEvent) {
 }
 
 function keyboard(event: KeyboardEvent) {
+  if (deleteDialog.value) {
+    if (event.key === 'Escape' || event.ctrlKey && event.key === '[') {
+      event.preventDefault();
+      if (!deleting.value) deleteDialog.value = false;
+    }
+    return;
+  }
   if (event.defaultPrevented || event.isComposing || event.metaKey || event.altKey || event.shiftKey || document.querySelector('[role="dialog"]')) return;
   const target = event.target instanceof Element ? event.target : null;
   if (target?.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="textbox"], [role="scrollbar"]')) return;
@@ -70,10 +120,15 @@ function keyboard(event: KeyboardEvent) {
   }
   if (props.loading) return;
   const key = ({ ArrowLeft: 'h', ArrowDown: 'j', ArrowUp: 'k', ArrowRight: 'l' } as Record<string, string>)[event.key] || event.key;
-  if (!['h', 'j', 'k', 'l', 'Enter'].includes(key)) return;
+  if (!['h', 'j', 'k', 'l', 'Enter', 'x'].includes(key)) return;
   const buttons = cards();
   if (!buttons.length) return;
   const position = Math.max(0, items.value.findIndex(item => item.id === state.value.selectedId));
+  if (key === 'x') {
+    event.preventDefault();
+    if (!event.repeat) confirmDeletion([items.value[position]!], false, true);
+    return;
+  }
   if (key === 'Enter') {
     if (target?.closest('button') && !target.closest('.clarity-card')) return;
     event.preventDefault();
@@ -120,22 +175,34 @@ onUnmounted(() => document.removeEventListener('keydown', keyboard));
     <div class="library-toolbar library-content">
       <div class="page-intro"><p class="eyebrow">Your clarity library</p><h1>Good decisions start here.<br><span>Make the next step clear.</span></h1><p class="lede">Connected questions, published by your agent. Explore the choices and keep the reasoning.</p></div>
       <label class="search"><i class="pi pi-search" aria-hidden="true"/><input ref="search" v-model="state.query" type="search" placeholder="Search titles and descriptions" aria-label="Search clarifications" autocomplete="off" @keydown="searchKeyboard"><kbd aria-hidden="true">/</kbd></label>
-      <div class="library-results"><p class="result-count" role="status">{{ loading ? 'Loading your clarifications…' : `${items.length} clarification${items.length === 1 ? '' : 's'}${term ? ' found' : ''}` }}</p></div>
+      <div class="library-results"><p class="result-count" role="status">{{ loading ? 'Loading your clarifications…' : `${items.length} clarification${items.length === 1 ? '' : 's'}${term ? ' found' : ''}` }}</p><Button v-if="props.items.length" class="delete-all" label="Delete all" icon="pi pi-trash" severity="danger" text size="small" :disabled="loading || deleteDialog" aria-controls="delete-clarification-dialog" :aria-expanded="deleteDialog && deleteAll" @click="confirmDeletion(props.items, true)"/></div>
     </div>
     <div ref="scroller" class="library-scroll" role="region" aria-label="Clarification cards" @scroll="state.scrollTop = scroller?.scrollTop || 0">
       <div class="library-content library-card-content">
-        <div v-if="items.length" ref="grid" class="card-grid" aria-label="Clarifications" aria-description="Use h j k l or arrow keys to move between cards. Press Enter to open a clarification.">
-          <button v-for="item in items" :key="item.id" class="clarity-card" :data-clarification-id="item.id" :tabindex="item.id === state.selectedId ? 0 : -1" @focus="state.selectedId = item.id" @click="open(item.id)">
+        <div v-if="items.length" ref="grid" class="card-grid" aria-label="Clarifications" aria-description="Use h j k l or arrow keys to move between cards. Press Enter to open a clarification, or x to delete it.">
+          <div v-for="item in items" :key="item.id" class="clarity-card-wrap">
+          <button class="clarity-card" :data-clarification-id="item.id" :tabindex="item.id === state.selectedId ? 0 : -1" @focus="state.selectedId = item.id" @click="open(item.id)">
             <GraphThumbnail :workspace="item"/>
             <div class="card-body"><h2>{{ item.title }}</h2><p>{{ item.description || 'An open space to develop your next decision.' }}</p></div>
             <div class="card-footer"><span>{{ item.commits.at(-1)?.graph.nodes.length || 0 }} nodes · {{ counts(item).decided }} decided<span v-if="counts(item).assumptions"> · {{ counts(item).assumptions }} assumptions</span></span><i class="pi pi-arrow-right" aria-hidden="true"/></div>
           </button>
+          <button type="button" class="delete-clarification" :aria-label="`Delete ${item.title}`" :title="`Delete ${item.title}`" aria-controls="delete-clarification-dialog" :aria-expanded="deleteDialog && !deleteAll && deleteTargets[0]?.id === item.id" @focus="state.selectedId = item.id" @click="confirmDeletion([item])"><i class="pi pi-trash" aria-hidden="true"/></button>
+          </div>
         </div>
         <section v-else-if="!loading" class="empty-library">
           <i class="pi pi-sitemap" aria-hidden="true"/><h2>{{ term ? 'No matching clarifications' : 'A place for the next decision' }}</h2><p>{{ term ? 'Try another title or description.' : 'Ask your agent to publish a clarification through Ari’s MCP tools.' }}</p>
         </section>
       </div>
     </div>
+    <Dialog id="delete-clarification-dialog" v-model:visible="deleteDialog" modal :dismissable-mask="!deleting" :header="deleteAll ? 'Delete all clarifications?' : 'Delete clarification?'" :closable="false" :close-on-escape="!deleting" :draggable="false" :style="{ width: 'min(480px, 94vw)' }" aria-describedby="delete-clarification-description" @after-hide="restoreDeleteFocus">
+      <p v-if="deleteAll" id="delete-clarification-description">Delete all {{ deleteTargets.length }} clarifications in your library and all their revision history, including clarifications hidden by search? You can undo for 8 seconds from the notification.</p>
+      <p v-else id="delete-clarification-description">Delete “{{ deleteTargets[0]?.title }}” and all its revision history? You can undo for 8 seconds from the notification.</p>
+      <p v-if="deleteError" class="delete-error" role="alert">{{ deleteError }}</p>
+      <template #footer>
+        <Button :label="deleteError ? 'Close' : 'Cancel'" severity="secondary" outlined :autofocus="!focusDeleteConfirmation || !!deleteError" :disabled="deleting" @click="deleteDialog = false"/>
+        <Button v-if="!deleteError" :label="deleteAll ? 'Delete all clarifications' : 'Delete clarification'" icon="pi pi-trash" severity="danger" :autofocus="focusDeleteConfirmation" :loading="deleting" :disabled="deleting" @click="deleteClarifications"/>
+      </template>
+    </Dialog>
   </main>
 </template>
 
@@ -156,7 +223,13 @@ onUnmounted(() => document.removeEventListener('keydown', keyboard));
 .search input{min-width:0;width:100%;padding:1px 2px;border:0;outline:0;background:transparent;color:var(--text);font-size:13px;line-height:normal}
 .search input::placeholder{color:var(--muted);opacity:1}
 .search kbd{display:block;min-width:auto;padding:2px 6px;font-size:11.25px;line-height:normal;white-space:nowrap}
-.library-results{display:flex;align-items:center;min-height:32px;margin-bottom:8px}
+.library-results{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:32px;margin-bottom:8px}
+.clarity-card-wrap{position:relative;display:flex;min-width:0}
+.delete-clarification{position:absolute;top:10px;right:10px;display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:6px;background:var(--raised);color:var(--muted)}
+.delete-clarification:hover{background:var(--soft);color:var(--danger)}
+.delete-clarification .pi{font-size:15px}
+.delete-clarification:focus-visible{outline:none;background:var(--raised);color:var(--text)}
+.delete-error{color:var(--danger);margin-top:16px;overflow-wrap:anywhere}
 .result-count{font-size:12.75px;color:var(--muted);line-height:1.65}
 .card-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
 .clarity-card{position:relative;display:flex;flex-direction:column;align-items:stretch;min-width:0;width:100%;padding:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text);text-align:left;box-shadow:0 1px 0 #ffffff05}

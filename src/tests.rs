@@ -510,3 +510,128 @@ async fn typed_relationships_preserve_full_scope_and_immutable_history() {
     assert_eq!(restored.revision, 2);
     assert_eq!(restored.commits[1].graph, graph);
 }
+
+#[tokio::test]
+async fn deletion_restores_complete_history_and_notifies_after_commit() {
+    use crate::service::DeleteTarget;
+    let (temp, service, original) = fixture().await;
+    let original = service
+        .publish(PublishGraph {
+            workspace_id: original.id.clone(),
+            expected_revision: original.revision,
+            graph: original.commits[0].graph.clone(),
+            commit: metadata(),
+            confirmed_changes: vec![],
+            links: Some(vec![crate::related_links::RelatedLink {
+                label: "Plan reference".into(),
+                url: "https://example.com/plan".into(),
+            }]),
+        })
+        .await
+        .unwrap();
+    let mut updates = service.updates.subscribe();
+    let deletion = service
+        .delete(vec![DeleteTarget {
+            id: original.id.clone(),
+            expected_revision: original.revision,
+        }])
+        .await
+        .unwrap();
+    updates.recv().await.unwrap();
+    assert!(service.list().await.unwrap().is_empty());
+    assert!(matches!(
+        service.get(&original.id).await,
+        Err(Error::Missing)
+    ));
+    let reopened = Service::open(&temp.path().join("ari.db")).await.unwrap();
+    reopened.restore(&deletion.token).await.unwrap();
+    assert_eq!(
+        serde_json::to_value(reopened.get(&original.id).await.unwrap()).unwrap(),
+        serde_json::to_value(original).unwrap()
+    );
+    assert!(matches!(
+        reopened.restore(&deletion.token).await,
+        Err(Error::Invalid(_))
+    ));
+}
+
+#[tokio::test]
+async fn bulk_deletion_rolls_back_when_any_revision_is_stale() {
+    use crate::service::DeleteTarget;
+    let (_temp, service, original) = fixture().await;
+    let second = service
+        .create(CreateWorkspace {
+            id: "second".into(),
+            title: "Another plan".into(),
+            description: String::new(),
+            links: vec![],
+            graph: test_graph(vec![]),
+            commit: metadata(),
+        })
+        .await
+        .unwrap();
+    let mut updates = service.updates.subscribe();
+    assert!(matches!(
+        service
+            .delete(vec![
+                DeleteTarget {
+                    id: original.id.clone(),
+                    expected_revision: original.revision
+                },
+                DeleteTarget {
+                    id: second.id.clone(),
+                    expected_revision: 99
+                },
+            ])
+            .await,
+        Err(Error::RevisionConflict(1))
+    ));
+    assert_eq!(service.list().await.unwrap().len(), 2);
+    assert!(updates.try_recv().is_err());
+}
+
+#[tokio::test]
+async fn undo_rejects_reused_ids_and_expired_backups() {
+    use crate::service::DeleteTarget;
+    use sqlx::Connection;
+    let (temp, service, original) = fixture().await;
+    let deletion = service
+        .delete(vec![DeleteTarget {
+            id: original.id.clone(),
+            expected_revision: 1,
+        }])
+        .await
+        .unwrap();
+    let replacement = service
+        .create(CreateWorkspace {
+            id: original.id.clone(),
+            title: "Replacement plan".into(),
+            description: String::new(),
+            links: vec![],
+            graph: test_graph(vec![]),
+            commit: metadata(),
+        })
+        .await
+        .unwrap();
+    assert!(matches!(
+        service.restore(&deletion.token).await,
+        Err(Error::Conflict(_))
+    ));
+    assert_eq!(
+        service.get(&original.id).await.unwrap().title,
+        replacement.title
+    );
+    let mut db = sqlx::SqliteConnection::connect_with(
+        &sqlx::sqlite::SqliteConnectOptions::new().filename(temp.path().join("ari.db")),
+    )
+    .await
+    .unwrap();
+    sqlx::query("UPDATE deletions SET expires_at=0")
+        .execute(&mut db)
+        .await
+        .unwrap();
+    assert!(matches!(
+        service.restore(&deletion.token).await,
+        Err(Error::Invalid(_))
+    ));
+}
