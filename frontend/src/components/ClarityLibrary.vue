@@ -160,7 +160,7 @@ watch([items, () => props.loading], () => {
     if (props.loading) return;
     if (scroller.value) scroller.value.scrollTop = state.value.scrollTop;
     if ((restoreFocus || document.activeElement === document.body) && !document.querySelector('[role="dialog"]')) {
-      focusCard(Math.max(0, items.value.findIndex(item => item.id === state.value.selectedId)), state.value.scrollTop === 0);
+      focusCard(Math.max(0, items.value.findIndex(item => item.id === state.value.selectedId)), restoreFocus && state.value.scrollTop === 0);
     }
     restoreFocus = false;
   });
@@ -172,12 +172,14 @@ onUnmounted(() => document.removeEventListener('keydown', keyboard));
 <template>
   <main class="library" :aria-busy="loading" :style="{ '--overview-scroll': `${state.scrollTop}px` }">
     <DottedBackdrop/>
-    <div class="library-toolbar library-content">
+    <div ref="scroller" class="library-scroll" role="region" aria-label="Clarity library" @scroll="state.scrollTop = scroller?.scrollTop || 0">
+    <div class="library-intro library-content">
       <div class="page-intro"><p class="eyebrow">Your clarity library</p><h1>Good decisions start here.<br><span>Make the next step clear.</span></h1><p class="lede">Connected questions, published by your agent. Explore the choices and keep the reasoning.</p></div>
+    </div>
+    <div class="library-toolbar library-content">
       <label class="search"><i class="pi pi-search" aria-hidden="true"/><input ref="search" v-model="state.query" type="search" placeholder="Search titles and descriptions" aria-label="Search clarifications" autocomplete="off" @keydown="searchKeyboard"><kbd aria-hidden="true">/</kbd></label>
       <div class="library-results"><p class="result-count" role="status">{{ loading ? 'Loading your clarifications…' : `${items.length} clarification${items.length === 1 ? '' : 's'}${term ? ' found' : ''}` }}</p><Button v-if="props.items.length" class="delete-all" label="Delete all" icon="pi pi-trash" severity="danger" text size="small" :disabled="loading || deleteDialog" aria-controls="delete-clarification-dialog" :aria-expanded="deleteDialog && deleteAll" @click="confirmDeletion(props.items, true)"/></div>
     </div>
-    <div ref="scroller" class="library-scroll" role="region" aria-label="Clarification cards" @scroll="state.scrollTop = scroller?.scrollTop || 0">
       <div class="library-content library-card-content">
         <div v-if="items.length" ref="grid" class="card-grid" aria-label="Clarifications" aria-description="Use h j k l or arrow keys to move between cards. Press Enter to open a clarification, or x to delete it.">
           <div v-for="item in items" :key="item.id" class="clarity-card-wrap">
@@ -209,7 +211,8 @@ onUnmounted(() => document.removeEventListener('keydown', keyboard));
 <style scoped>
 .library{position:relative;display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;overflow:hidden;background-image:radial-gradient(ellipse at 85% 5%,#e6b85c1f,transparent 60%);background-size:100% 450px;background-repeat:no-repeat;background-position:0 calc(-1 * var(--overview-scroll,0px))}
 .library-content{width:100%;padding-inline:24px}
-.library-toolbar{flex-shrink:0;padding-top:28px;padding-bottom:6px}
+.library-intro{padding-top:28px}
+.library-toolbar{padding-bottom:6px}
 .library-scroll{position:relative;flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scroll-padding-block:24px}
 .library-card-content{padding-top:6px;padding-bottom:32px}
 .page-intro{margin-bottom:20px}
@@ -247,7 +250,7 @@ onUnmounted(() => document.removeEventListener('keydown', keyboard));
 .empty-library h2{margin:20px 0 10px;font-size:20.25px;color:var(--text)}
 .empty-library p{max-width:600px;margin:12px auto;font-size:15px}
 @media(max-width:1050px){.card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:700px){.library-content{padding-inline:16px}.library-toolbar{padding-top:20px}.page-intro{margin-bottom:16px}.page-intro h1{font-size:30px}}
+@media(max-width:700px){.library-content{padding-inline:16px}.library-intro{padding-top:20px}.library-toolbar{position:sticky;top:0;z-index:5;padding-top:12px;background:#101113}.library-scroll{scroll-padding-top:124px}.page-intro{margin-bottom:4px}.page-intro h1{font-size:30px}}
 @media(max-width:650px){.card-grid{grid-template-columns:minmax(0,1fr)}}
 @media(forced-colors:active){.library{background-image:none}.clarity-card:focus-visible::after{border-color:Highlight}}
 </style>

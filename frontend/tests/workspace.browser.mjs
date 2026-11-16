@@ -311,7 +311,7 @@ test('library navigation follows rendered rows, respects search, and restores fo
   await page.locator('.clarity-card').nth(6).scrollIntoViewIfNeeded();
   const scroll = await page.locator('.library-scroll').evaluate(el => el.scrollTop);
   assert.ok(scroll > 0);
-  assert.equal((await page.locator('.page-intro .eyebrow').boundingBox()).y, 94, 'The toolbar stays pinned while cards scroll');
+  assert.equal((await page.locator('.page-intro .eyebrow').boundingBox()).y, 94 - scroll, 'The intro moves with the library');
   await page.keyboard.press('Enter');
   await page.locator('.graph-node').first().waitFor();
   assert.ok(page.url().endsWith(ids[6]));
@@ -1848,4 +1848,41 @@ test('delete all includes hidden cards and stale deletion refreshes before anoth
   await search.fill('');
   await page.getByRole('button', { name: 'Delete hidden plan', exact: true }).waitFor();
   assert.equal((await api('/workspaces')).length, 2);
+});
+
+test('mobile library scrolls its intro and keeps opaque search and deletion controls above cards', { timeout: 60_000 }, async t => {
+  const { base, tool } = await fixture(t);
+  for (let i = 0; i < 7; i++) await tool('create_clarification', {
+    id: `mobile-library-${i}`, title: `Mobile clarification ${i}`,
+    graph: exampleGraph(), commit: { title: 'Stage the topic', kind: 'topicStaged' },
+  });
+  const page = await browserFor(t);
+  for (const width of [320, 390, 700]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(base);
+    await page.waitForFunction(() => document.querySelectorAll('.clarity-card').length === 7);
+    assert.equal(await page.locator('.library-scroll').evaluate(el => el.scrollTop), 0);
+    const introTop = (await page.locator('.page-intro').boundingBox()).y;
+    await page.locator('.library-scroll').evaluate(el => el.scrollTop = 500);
+    await page.waitForFunction(() => document.querySelector('.library-scroll').scrollTop >= 500);
+
+    const geometry = await page.locator('.library-toolbar').evaluate(strip => {
+      const rect = strip.getBoundingClientRect();
+      const style = getComputedStyle(strip);
+      return { top: rect.top, left: rect.left, right: rect.right, background: style.backgroundColor,
+        covered: [1, innerWidth / 2, innerWidth - 1].every(x =>
+          [rect.top + 1, rect.bottom - 1].every(y => strip.contains(document.elementFromPoint(x, y)))) };
+    });
+    assert.equal(geometry.left, 0);
+    assert.equal(geometry.right, width);
+    assert.ok(!geometry.background.endsWith(', 0)') && !geometry.background.startsWith('rgba('), geometry.background);
+    assert.equal(geometry.covered, true, 'The strip covers the full width, including padding and gaps');
+
+    assert.equal(geometry.top, 66);
+    assert.ok((await page.locator('.page-intro').boundingBox()).y < introTop - 100);
+    await page.getByRole('searchbox').fill('Mobile clarification 3');
+    assert.equal(await page.locator('.clarity-card').count(), 1);
+    await page.keyboard.press('Enter');
+    assert.equal(await page.locator('.clarity-card:focus').count(), 1);
+  }
 });
