@@ -258,7 +258,7 @@ onUnmounted(() => document.removeEventListener('keydown', keyboard));
 .empty-library h2{margin:20px 0 10px;font-size:20.25px;color:var(--text)}
 .empty-library p{max-width:600px;margin:12px auto;font-size:15px}
 @media(max-width:1050px){.card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:700px){.library-content{padding-inline:16px}.library-intro{padding-top:20px}.library-toolbar{position:sticky;top:0;z-index:5;padding-top:12px;background:#101113}.library-toolbar.is-stuck{box-shadow:0 6px 10px -6px #0009}.library-scroll{scroll-padding-top:124px}.page-intro{margin-bottom:4px}.page-intro h1{font-size:30px}}
+@media(max-width:700px){.library-content{padding-inline:16px}.library-intro{padding-top:20px}.library-toolbar{position:sticky;top:0;z-index:3;padding-top:12px;background:#101113}.library-toolbar.is-stuck{box-shadow:0 6px 10px -6px #0009}.library-scroll{scroll-padding-top:124px}.page-intro{margin-bottom:4px}.page-intro h1{font-size:30px}}
 @media(max-width:650px){.card-grid{grid-template-columns:minmax(0,1fr)}}
 @media(forced-colors:active){.library{background-image:none}.clarity-card:focus-visible::after{border-color:Highlight}}
 </style>

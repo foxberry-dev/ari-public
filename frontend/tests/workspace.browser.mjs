@@ -1872,6 +1872,7 @@ test('mobile library scrolls its intro and keeps opaque search and deletion cont
       const rect = strip.getBoundingClientRect();
       const style = getComputedStyle(strip);
       return { top: rect.top, left: rect.left, right: rect.right, background: style.backgroundColor,
+        scrollbarAboveStrip: !!document.elementFromPoint(innerWidth - 6, rect.top + rect.height / 2)?.closest('.overlay-scrollbar'),
         covered: [1, innerWidth / 2, innerWidth - 1].every(x =>
           [rect.top + 1, rect.bottom - 1].every(y => strip.contains(document.elementFromPoint(x, y)))) };
     });
@@ -1879,6 +1880,7 @@ test('mobile library scrolls its intro and keeps opaque search and deletion cont
     assert.equal(geometry.right, width);
     assert.ok(!geometry.background.endsWith(', 0)') && !geometry.background.startsWith('rgba('), geometry.background);
     assert.equal(geometry.covered, true, 'The strip covers the full width, including padding and gaps');
+    assert.equal(geometry.scrollbarAboveStrip, true, 'The scrollbar stays visible and interactive over the sticky strip');
 
     assert.equal(geometry.top, 66);
     assert.ok((await page.locator('.page-intro').boundingBox()).y < introTop - 100);
