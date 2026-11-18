@@ -45,7 +45,7 @@ defineExpose({ toggle, handleKey });
 </script>
 <template>
   <template v-if="references.length">
-    <button ref="trigger" class="related-links-trigger" aria-label="Related links" title="Related links" aria-haspopup="dialog" aria-controls="related-links" :aria-expanded="open" @click="toggle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 13 4-4m-6 6-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m2 2 1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0"/></svg><span>Links · {{ references.length }}</span></button>
+    <button ref="trigger" class="related-links-trigger" aria-label="Related links" title="Related links" aria-haspopup="dialog" aria-controls="related-links" :aria-expanded="open" @click="toggle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 17H7A5 5 0 0 1 7 7h2m6 0h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg><span>Links · {{ references.length }}</span></button>
     <div id="related-links" ref="panel" popover data-related-links class="related-links-popover" role="dialog" aria-label="Related links" @toggle="open = ($event as ToggleEvent).newState === 'open'">
       <ul><li v-for="(link, index) in references" :key="index"><a :href="link.url" rel="noopener noreferrer" :title="link.url" @click="panel?.hidePopover()"><LinkFavicon :url="link.url"/><span class="reference-text"><span>{{ link.label }}</span><small>{{ link.hostname }}</small></span><svg class="external-link" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3h7v7m0-7L10 14M10 3H4v17h17v-6"/></svg></a></li></ul>
     </div>

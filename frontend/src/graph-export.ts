@@ -1,4 +1,5 @@
-import { comparisonLayout, constraintCenter, graphBounds, graphChanges, graphDecorations, nodeChangeLabel, nodeHeight, groupHeaderHeight, nodeWidth } from './graph';
+import { comparisonLayout, constraintCenter, graphBounds, graphChanges, graphDecorations, nodeChangeLabel, groupHeaderHeight, nodeWidth } from './graph';
+import { cardLines as lines, nodeCardHeight } from './node-card';
 import { participants, relationshipChanges } from './relationships';
 import { assumptionColor, changeColors, nodeChangeColor } from './graph-presentation';
 import { nodeStatus, type Graph, type NodeReference } from './model';
@@ -10,17 +11,6 @@ export interface ExportPlan {
   options: { layout: GraphView; display: 'current' | 'changed'; inputs: boolean; constraints: boolean; selected?: string; format: 'svg' | 'png' | 'pdf' };
 }
 const escape = (text: string) => text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/gu, '�').replace(/[&<>"']/g, value => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[value]!);
-function lines(text: string, maximum: number, count: number) {
-  const words = text.replace(/\s+/g, ' ').trim().split(' ');
-  const result: string[] = [];
-  let line = '';
-  for (const word of words) {
-    if (line && line.length + word.length + 1 > maximum) { result.push(line); line = ''; }
-    line += (line ? ' ' : '') + word;
-  }
-  if (line) result.push(line);
-  return result.slice(0, count).map((line, index) => line.length > maximum || index === count - 1 && result.length > count ? line.slice(0, maximum - 1) + '…' : line);
-}
 
 export function graphImage(plan: ExportPlan) {
   if (!plan.current.edges) throw new Error('This historical revision has no typed relationships.');
@@ -36,12 +26,13 @@ export function graphImage(plan: ExportPlan) {
   const previousNodes = new Map(plan.previous.nodes.map(n => [n.id, n]));
   const wires = graph.edges.filter(e => (e.relation.kind !== 'input' || plan.options.inputs) && (e.relation.kind !== 'constraint' || plan.options.constraints));
   const nodes = graph.nodes.map(({ node, x, y }) => {
+    const nodeHeight = nodeCardHeight(node);
     const change = changed ? changes.get(node.id) : undefined;
     const color = change ? nodeChangeColor(previousNodes.get(node.id), node, change) : node.kind === 'assumption' ? assumptionColor : '#4b5148';
     const fill = color === changeColors.answered ? '#20292e' : change === 'removed' ? '#2d2527' : node.kind === 'assumption' ? '#25232d' : change === 'added' ? '#1d2b28' : node.kind === 'topic' ? '#2b2c26' : '#18191b';
     const label = change ? (node.kind === 'assumption' ? 'Assumption · ' : '') + nodeChangeLabel(previousNodes.get(node.id), node, change) : nodeStatus(node);
-    const title = lines(node.title, 26, 1).map(line => `<text x="10" y="24" font-size="14" font-weight="600" fill="${node.kind === 'assumption' ? '#c7beda' : '#f0ebde'}">${escape(line)}</text>`).join('');
-    const answer = lines(node.content, 32, 2).map((line, i) => `<text x="10" y="${45 + i * 16}" font-size="11" fill="${node.kind === 'assumption' ? '#a79ab9' : '#a5ada5'}">${escape(line)}</text>`).join('');
+    const title = lines(node.title, 26).map((line, i) => `<text x="10" y="${24 + i * 19.6}" font-size="14" font-weight="600" fill="${node.kind === 'assumption' ? '#c7beda' : '#f0ebde'}">${escape(line)}</text>`).join('');
+    const answer = lines(node.content, 32).map((line, i) => `<text x="10" y="${25 + lines(node.title, 26).length * 19.6 + i * 16.5}" font-size="11" fill="${node.kind === 'assumption' ? '#a79ab9' : '#a5ada5'}">${escape(line)}</text>`).join('');
     const number = plan.nodeIndex?.find(entry => entry.id === node.id)?.number;
     const numberLabel = number ? `<text x="${nodeWidth - 10}" y="${nodeHeight - 12}" text-anchor="end" font-size="9" fill="#9caa96">#${number}</text>` : '';
     return `<g transform="translate(${x} ${y})"><rect width="${nodeWidth}" height="${nodeHeight}" rx="11" fill="${fill}" stroke="${color}" stroke-width="2" ${node.kind === 'assumption' || change === 'removed' ? 'stroke-dasharray="4 3"' : ''}/>${title}${answer}<text x="10" y="${nodeHeight - 12}" font-size="9" fill="${change || node.kind === 'assumption' ? color : '#a6a397'}">${escape(label)}</text>${numberLabel}</g>`;

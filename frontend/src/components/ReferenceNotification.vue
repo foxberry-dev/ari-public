@@ -12,14 +12,15 @@ function dismiss() {
   message.value = '';
 }
 
-async function copy(reference: string) {
+async function copy(reference: string, kind: 'reference' | 'link' | 'prompt' = 'reference', label?: string) {
   let error = false;
   try { await navigator.clipboard.writeText(reference); }
   catch { error = true; }
   failed.value = error;
-  message.value = error ? 'Could not copy reference. Clipboard access is unavailable or was denied.' : `Copied ${reference}`;
+  message.value = error ? `Could not copy ${kind === 'prompt' ? 'request' : kind}. Clipboard access is unavailable or was denied.` : kind === 'link' ? 'Link copied' : kind === 'prompt' ? `${label || 'Shortcut'} copied` : `Copied ${reference}`;
   clearTimeout(timer);
   timer = setTimeout(dismiss, error ? 5000 : 3000);
+  return !error;
 }
 
 onBeforeUnmount(() => clearTimeout(timer));

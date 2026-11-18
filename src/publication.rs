@@ -11,6 +11,30 @@ use crate::relationships::GraphEdge;
 
 #[derive(Clone, Debug, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PublicationAlternative {
+    /// Stable option identity, referenced by selectedAlternative and constraint participants. Not displayed as answer text.
+    #[schemars(length(min = 1, max = 32768), regex(pattern = r"\S"))]
+    pub id: String,
+    /// The complete answer in one text. No separate short label or description. May wrap across lines.
+    #[schemars(length(min = 1, max = 32768), regex(pattern = r"\S"))]
+    pub text: String,
+    /// Advice only; does not imply selection or human confirmation.
+    #[serde(default)]
+    pub recommended: bool,
+}
+
+impl From<PublicationAlternative> for Alternative {
+    fn from(option: PublicationAlternative) -> Self {
+        Self {
+            label: option.id,
+            description: option.text,
+            recommended: option.recommended,
+        }
+    }
+}
+
+#[derive(Clone, Debug, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CreateClarification {
     /// Stable clarification slug, 1–64 ASCII letters, digits, underscores or hyphens.
     #[schemars(length(min = 1, max = 64), regex(pattern = r"^[A-Za-z0-9_-]+$"))]
@@ -88,8 +112,8 @@ pub enum PublicationNode {
         /// Usually omit on the root topic: alternatives belong to the specific question they answer. At most 20 choices.
         #[serde(default)]
         #[schemars(length(max = 20))]
-        alternatives: Vec<Alternative>,
-        /// Exact label from this node's alternatives when a choice is applicable. Omit when no choice is recorded; never use null.
+        alternatives: Vec<PublicationAlternative>,
+        /// Exact option ID from this node's alternatives when a choice is applicable. Omit when no choice is recorded; never use null.
         #[serde(
             default,
             skip_serializing_if = "Option::is_none",
@@ -110,14 +134,15 @@ pub enum PublicationNode {
         /// Short question or decision label. Nonblank plain text, at most 32 KiB UTF-8.
         #[schemars(length(min = 1, max = 32768), regex(pattern = r"\S"))]
         title: String,
-        /// Concrete confirmed answer. Restate the human's meaning faithfully; not a question, placeholder or unconfirmed preference. At most 32 KiB UTF-8.
-        #[schemars(length(min = 1, max = 32768), regex(pattern = r"\S"))]
+        /// Free-text confirmed answer when no option is selected. Omit when selectedAlternative supplies the answer.
+        #[serde(default)]
+        #[schemars(length(max = 32768))]
         content: String,
         /// Materially different directions that remain relevant to this question. Retain useful options and remove obsolete ones when the discussion changes scope; free-text answers do not require invented alternatives. At most 20 choices.
         #[serde(default)]
         #[schemars(length(max = 20))]
-        alternatives: Vec<Alternative>,
-        /// Exact label of the decided alternative when applicable. Detailed content must agree with this label. Omit for a free-text answer; never use null.
+        alternatives: Vec<PublicationAlternative>,
+        /// Exact option ID of the decided alternative when applicable. Detailed content must agree with this option. Omit for a free-text answer; never use null.
         #[serde(
             default,
             skip_serializing_if = "Option::is_none",
@@ -138,13 +163,14 @@ pub enum PublicationNode {
         /// The question or decision being explored. Nonblank plain text, at most 32 KiB UTF-8.
         #[schemars(length(min = 1, max = 32768), regex(pattern = r"\S"))]
         title: String,
-        /// Concrete assumed answer, consistent with selectedAlternative. Additional detail is allowed; a pending-question placeholder is not. At most 32 KiB UTF-8.
-        #[schemars(length(min = 1, max = 32768), regex(pattern = r"\S"))]
+        /// Omit when selectedAlternative supplies the answer. If provided, must equal the selected option text.
+        #[serde(default)]
+        #[schemars(length(max = 32768))]
         content: String,
-        /// 2–20 materially different answers to this question, usually 2–4. Labels must be unique within this node.
+        /// 2–20 materially different answers to this question, usually 2–4. Option IDs must be unique within this node.
         #[schemars(length(min = 2, max = 20))]
-        alternatives: Vec<Alternative>,
-        /// Exact label of one of this node's alternatives. This is the agent's provisional choice, not human approval; content must agree with it.
+        alternatives: Vec<PublicationAlternative>,
+        /// Exact option ID of one of this node's alternatives. This is the agent's provisional choice, not human approval; content must agree with it.
         #[schemars(length(min = 1, max = 32768), regex(pattern = r"\S"))]
         selected_alternative: String,
     },
@@ -247,7 +273,49 @@ impl PublishRevision {
 
 impl PublicationGraph {
     pub fn validate(&self) -> Result<(), String> {
-        validate_graph(&self.clone().into())
+        for (index, node) in self.nodes.iter().enumerate() {
+            let (content, alternatives, selected) = match node {
+                PublicationNode::Topic {
+                    content,
+                    alternatives,
+                    selected_alternative,
+                    ..
+                }
+                | PublicationNode::Decided {
+                    content,
+                    alternatives,
+                    selected_alternative,
+                    ..
+                } => (content, alternatives, selected_alternative.as_deref()),
+                PublicationNode::Assumption {
+                    content,
+                    alternatives,
+                    selected_alternative,
+                    ..
+                } => (content, alternatives, Some(selected_alternative.as_str())),
+            };
+            for (option_index, option) in alternatives.iter().enumerate() {
+                text(
+                    &option.text,
+                    &format!("graph.nodes[{index}].alternatives[{option_index}].text"),
+                    true,
+                )?;
+            }
+            if let Some(option) =
+                selected.and_then(|id| alternatives.iter().find(|option| option.id == id))
+            {
+                if !content.is_empty() && content != &option.text {
+                    return Err(format!(
+                        "graph.nodes[{index}].content: omit when selectedAlternative supplies the answer, or use exactly its text"
+                    ));
+                }
+            }
+        }
+        validate_graph(&self.clone().into()).map_err(|error| {
+            error
+                .replace(".label", ".id")
+                .replace(".description", ".text")
+        })
     }
 }
 
@@ -292,6 +360,16 @@ impl From<PublicationGraph> for Graph {
     }
 }
 
+fn option_content(
+    content: String,
+    alternatives: &[PublicationAlternative],
+    selected: Option<&str>,
+) -> String {
+    selected
+        .and_then(|id| alternatives.iter().find(|option| option.id == id))
+        .map_or(content, |option| option.text.clone())
+}
+
 impl From<PublicationNode> for GraphNode {
     fn from(node: PublicationNode) -> Self {
         match node {
@@ -306,9 +384,9 @@ impl From<PublicationNode> for GraphNode {
                 title,
                 kind: NodeKind::Topic,
                 group_label: None,
-                content,
+                content: option_content(content, &alternatives, selected_alternative.as_deref()),
                 rationale: String::new(),
-                alternatives,
+                alternatives: alternatives.into_iter().map(Into::into).collect(),
                 selected_alternative,
                 depends_on: vec![],
             },
@@ -324,9 +402,9 @@ impl From<PublicationNode> for GraphNode {
                 title,
                 kind: NodeKind::Decided,
                 group_label,
-                content,
+                content: option_content(content, &alternatives, selected_alternative.as_deref()),
                 rationale: String::new(),
-                alternatives,
+                alternatives: alternatives.into_iter().map(Into::into).collect(),
                 selected_alternative,
                 depends_on: vec![],
             },
@@ -342,9 +420,9 @@ impl From<PublicationNode> for GraphNode {
                 title,
                 kind: NodeKind::Assumption,
                 group_label,
-                content,
+                content: option_content(content, &alternatives, Some(&selected_alternative)),
                 rationale: String::new(),
-                alternatives,
+                alternatives: alternatives.into_iter().map(Into::into).collect(),
                 selected_alternative: Some(selected_alternative),
                 depends_on: vec![],
             },
@@ -372,7 +450,11 @@ impl From<PublicationCommit> for CommitMetadata {
 pub fn graph_for_agent(graph: &Graph) -> Value {
     let nodes: Vec<_> = graph.nodes.iter().map(|node| {
         let mut value = serde_json::json!({ "id": node.id, "title": node.title, "kind": node.kind,
-            "content": node.content, "alternatives": node.alternatives });
+            "content": node.content, "alternatives": node.alternatives.iter().map(|option| serde_json::json!({
+                "id": option.label,
+                "text": if node.selected_alternative.as_ref() == Some(&option.label) { &node.content } else if !option.description.is_empty() { &option.description } else { &option.label },
+                "recommended": option.recommended
+            })).collect::<Vec<_>>() });
         if let Some(label) = &node.group_label {
             value["groupLabel"] = serde_json::json!(label);
         }
@@ -388,6 +470,64 @@ pub fn graph_for_agent(graph: &Graph) -> Value {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn selected_option_supplies_the_answer_and_corrections_require_acknowledgment() {
+        let input = json!({"nodes":[
+            {"id":"topic","title":"Smoothie","kind":"topic","content":"Plan a smoothie."},
+            {"id":"protein","title":"Main protein ingredient","kind":"assumption",
+             "alternatives":[
+                {"id":"yogurt","text":"Use Greek yogurt alongside protein powder."},
+                {"id":"powder","text":"Use protein powder without Greek yogurt."}
+             ],"selectedAlternative":"yogurt"}
+        ],"edges":[{"id":"parent-protein","kind":"parent","from":"topic","to":"protein"}]});
+        let publication: PublicationGraph = serde_json::from_value(input.clone()).unwrap();
+        assert_eq!(publication.validate(), Ok(()));
+        let mut stored: Graph = publication.into();
+        assert_eq!(
+            stored.nodes[1].content,
+            "Use Greek yogurt alongside protein powder."
+        );
+        stored.nodes[1].kind = NodeKind::Decided;
+        let normalized = graph_for_agent(&stored);
+        assert_eq!(
+            normalized["nodes"][1]["alternatives"][0],
+            json!({
+                "id":"yogurt", "text":"Use Greek yogurt alongside protein powder.", "recommended":false
+            })
+        );
+        let copy: PublicationGraph = serde_json::from_value(normalized.clone()).unwrap();
+        assert_eq!(copy.validate(), Ok(()));
+        let copied: Graph = copy.into();
+        assert_eq!(
+            crate::revision_validation::validate(&stored, &copied, &[]),
+            Ok(())
+        );
+        let mut correction = normalized;
+        correction["nodes"][1]
+            .as_object_mut()
+            .unwrap()
+            .remove("content");
+        correction["nodes"][1]["alternatives"][0]["text"] =
+            json!("Use Greek yogurt without protein powder.");
+        let corrected: PublicationGraph = serde_json::from_value(correction).unwrap();
+        assert_eq!(corrected.validate(), Ok(()));
+        let corrected: Graph = corrected.into();
+        assert!(crate::revision_validation::validate(&stored, &corrected, &[]).is_err());
+        assert_eq!(
+            crate::revision_validation::validate(&stored, &corrected, &["protein".into()]),
+            Ok(())
+        );
+        let mut conflict = input;
+        conflict["nodes"][1]["content"] = json!("Use only protein powder.");
+        let conflict: PublicationGraph = serde_json::from_value(conflict).unwrap();
+        assert!(
+            conflict
+                .validate()
+                .unwrap_err()
+                .contains("omit when selectedAlternative")
+        );
+    }
 
     #[test]
     fn node_schema_requires_a_concrete_selected_assumption_and_only_visible_fields() {

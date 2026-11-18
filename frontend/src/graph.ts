@@ -1,13 +1,17 @@
 import type { Graph, GraphNode } from './model';
+import { nodeCardHeight } from './node-card';
+export { nodeCardHeight } from './node-card';
 import { participants, relationships, relationshipChanges, type GraphView, type Relationship } from './relationships';
 
 export interface Positioned { node: GraphNode; x: number; y: number }
 export interface Wire { id: string; relation: Relationship; from: string; to: string; path: string }
 export interface GraphLayout { nodes: Positioned[]; edges: Wire[]; width: number; height: number }
 export const nodeWidth = 224;
-export const nodeHeight = 104;
+export const nodeHeight = 159;
 export const groupHeaderHeight = 40;
-const hierarchyStepY = nodeHeight + 52;
+const hierarchyGapY = 36;
+const hierarchyStepX = nodeWidth + 64;
+const hierarchyStepY = nodeHeight + hierarchyGapY;
 
 export function layout(questions: GraphNode[]) {
   const byId = new Map(questions.map(q => [q.id, q]));
@@ -21,22 +25,49 @@ export function layout(questions: GraphNode[]) {
     depths.set(id, value);
     return value;
   }
-  const columns: GraphNode[][] = [];
-  for (const q of questions) (columns[depth(q.id)] ??= []).push(q);
-  const height = Math.max(1, ...columns.map(c => c.length)) * hierarchyStepY + 32;
-  const nodes: Positioned[] = columns.flatMap((column, x) => column.map((question, y) => ({
-    node: question, x: 24 + x * 308, y: 24 + (height - 48 - column.length * hierarchyStepY) / 2 + y * hierarchyStepY,
-  })));
+  for (const node of questions) depth(node.id);
+  const children = new Map(questions.map(node => [node.id, [] as GraphNode[]]));
+  const roots: GraphNode[] = [];
+  for (const node of questions) {
+    const parent = node.dependsOn.find(id => byId.has(id) && depths.get(id)! < depths.get(node.id)!);
+    if (parent) children.get(parent)!.push(node);
+    else roots.push(node);
+  }
+  const spans = new Map<string, number>();
+  function measure(node: GraphNode): number {
+    const siblings = children.get(node.id)!;
+    const span = Math.max(nodeCardHeight(node), siblings.reduce((sum, child) => sum + measure(child), 0) + Math.max(0, siblings.length - 1) * hierarchyGapY);
+    spans.set(node.id, span);
+    return span;
+  }
+  const height = roots.reduce((sum, root) => sum + measure(root), 0) + Math.max(0, roots.length - 1) * hierarchyGapY + 48;
+  const nodes: Positioned[] = [];
+  function place(node: GraphNode, top: number) {
+    const span = spans.get(node.id)!;
+    nodes.push({ node, x: 24 + depths.get(node.id)! * hierarchyStepX, y: top + (span - nodeCardHeight(node)) / 2 });
+    const siblings = children.get(node.id)!;
+    const childSpan = siblings.reduce((sum, child) => sum + spans.get(child.id)!, 0) + Math.max(0, siblings.length - 1) * hierarchyGapY;
+    let childTop = top + (span - childSpan) / 2;
+    for (const child of siblings) {
+      place(child, childTop);
+      childTop += spans.get(child.id)! + hierarchyGapY;
+    }
+  }
+  let top = 24;
+  for (const root of roots) {
+    place(root, top);
+    top += spans.get(root.id)! + hierarchyGapY;
+  }
   const positions = new Map(nodes.map(n => [n.node.id, n]));
   const edges = nodes.flatMap(n => n.node.dependsOn.flatMap(id => {
     const from = positions.get(id);
     if (!from) return [];
-    const x = from.x + nodeWidth, y = from.y + nodeHeight / 2;
-    const tx = n.x, ty = n.y + nodeHeight / 2;
+    const x = from.x + nodeWidth, y = from.y + nodeCardHeight(from.node) / 2;
+    const tx = n.x, ty = n.y + nodeCardHeight(n.node) / 2;
     return [{ id: `${id}:${n.node.id}`, relation: { id: `${id}:${n.node.id}`, kind: 'legacy' as const, from: id, to: n.node.id }, from: id, to: n.node.id,
       path: `M${x} ${y} C${x + 42} ${y} ${tx - 42} ${ty} ${tx} ${ty}` }];
   }));
-  return { nodes, edges, width: Math.max(nodeWidth + 48, columns.length * 308 - 36), height };
+  return { nodes, edges, width: Math.max(nodeWidth + 48, Math.max(0, ...depths.values()) * hierarchyStepX + nodeWidth + 48), height };
 }
 
 export type ChangeKind = 'added' | 'changed' | 'removed';
@@ -75,10 +106,10 @@ export function comparisonLayout(current: Graph, previous: Graph, changed: boole
   const changes = graphChanges(previous, current);
   for (const removed of old.nodes.filter(n => changes.get(n.node.id) === 'removed')) {
     let y = removed.y;
-    while (next.nodes.some(n => Math.abs(n.x - removed.x) < nodeWidth + 24 && Math.abs(n.y - y) < nodeHeight + 24)) y += hierarchyStepY;
+    while (next.nodes.some(n => Math.abs(n.x - removed.x) < nodeWidth + 24 && n.y < y + nodeCardHeight(removed.node) + 24 && y < n.y + nodeCardHeight(n.node) + 24)) y += hierarchyStepY;
     next.nodes.push({ ...removed, y });
     next.width = Math.max(next.width, removed.x + nodeWidth + 24);
-    next.height = Math.max(next.height, y + nodeHeight + 24);
+    next.height = Math.max(next.height, y + nodeCardHeight(removed.node) + 24);
   }
   const positions = new Map(next.nodes.map(n => [n.node.id, n]));
   for (const edge of old.edges.filter(e => !next.edges.some(n => n.id === e.id))) {
@@ -95,7 +126,8 @@ export function graphLayout(graph: Graph, view: GraphView, anchors = new Map<str
   const tree = layout(graph.nodes.map(n => ({ ...n, dependsOn: parents.filter(e => e.to === n.id).map(e => e.from) })));
   const originals = new Map(graph.nodes.map(n => [n.id, n]));
   tree.nodes = tree.nodes.map(n => ({ ...n, node: originals.get(n.node.id)! }));
-  const nodes = view === 'islands' ? topicIslands(graph, anchors) : view === 'rings' ? concentricRings(graph, anchors) : tree.nodes;
+  const grouped = view === 'islands' && hasGroups(graph);
+  const nodes = grouped ? topicIslands(graph, anchors) : view === 'rings' ? concentricRings(graph) : tree.nodes;
   const visible = relationships(graph).filter(e => view !== 'hierarchy' || e.kind === 'parent' || e.kind === 'legacy' || (selected && participants(e).includes(selected)));
   const wires = visible.flatMap<Wire>(relation => {
     if (relation.kind !== 'constraint') return [{ id: relation.id, relation, from: relation.from, to: relation.to, path: '' }];
@@ -103,14 +135,14 @@ export function graphLayout(graph: Graph, view: GraphView, anchors = new Map<str
   });
   return { nodes, edges: positionWires(nodes, wires, view),
     width: Math.max(nodeWidth + 48, ...nodes.map(n => n.x + nodeWidth + 24)),
-    height: Math.max(nodeHeight + 48, ...nodes.map(n => n.y + nodeHeight + 24)) };
+    height: Math.max(nodeHeight + 48, ...nodes.map(n => n.y + nodeCardHeight(n.node) + 24)) };
 }
 
 export function constraintCenter(edge: Relationship, nodes: Positioned[]) {
   const ids = new Set(participants(edge));
   const connected = nodes.filter(n => ids.has(n.node.id));
   return { x: connected.reduce((sum, n) => sum + n.x + nodeWidth / 2, 0) / Math.max(1, connected.length),
-    y: connected.reduce((sum, n) => sum + n.y + nodeHeight / 2, 0) / Math.max(1, connected.length) };
+    y: connected.reduce((sum, n) => sum + n.y + nodeCardHeight(n.node) / 2, 0) / Math.max(1, connected.length) };
 }
 
 export function positionWires(nodes: Positioned[], wires: Wire[], view: GraphView): Wire[] {
@@ -125,28 +157,30 @@ export function positionWires(nodes: Positioned[], wires: Wire[], view: GraphVie
       return [{ ...wire, path: `M${start.x} ${start.y} L${center.x} ${center.y}` }];
     }
     if (!to) return [];
-    if (view === 'hierarchy' && (wire.relation.kind === 'parent' || wire.relation.kind === 'legacy')) {
-      const x = from.x + nodeWidth, y = from.y + nodeHeight / 2, tx = to.x, ty = to.y + nodeHeight / 2;
-      return [{ ...wire, path: `M${x} ${y} C${x + 42} ${y} ${tx - 42} ${ty} ${tx} ${ty}` }];
+    if (view !== 'rings' && (wire.relation.kind === 'parent' || wire.relation.kind === 'legacy')) {
+      const direction = to.x >= from.x ? 1 : -1;
+      const x = from.x + (direction > 0 ? nodeWidth : 0), y = from.y + nodeCardHeight(from.node) / 2;
+      const tx = to.x + (direction > 0 ? 0 : nodeWidth), ty = to.y + nodeCardHeight(to.node) / 2;
+      return [{ ...wire, path: `M${x} ${y} C${x + direction * 42} ${y} ${tx - direction * 42} ${ty} ${tx} ${ty}` }];
     }
-    const start = boundary(from, { x: to.x + nodeWidth / 2, y: to.y + nodeHeight / 2 });
-    const end = boundary(to, { x: from.x + nodeWidth / 2, y: from.y + nodeHeight / 2 });
+    const start = boundary(from, { x: to.x + nodeWidth / 2, y: to.y + nodeCardHeight(to.node) / 2 });
+    const end = boundary(to, { x: from.x + nodeWidth / 2, y: from.y + nodeCardHeight(from.node) / 2 });
     return [{ ...wire, path: `M${start.x} ${start.y} L${end.x} ${end.y}` }];
   });
 }
 
 function boundary(node: Positioned, target: { x: number; y: number }) {
-  const x = node.x + nodeWidth / 2, y = node.y + nodeHeight / 2;
+  const x = node.x + nodeWidth / 2, y = node.y + nodeCardHeight(node.node) / 2;
   const dx = target.x - x, dy = target.y - y;
-  const ratio = 1 / Math.max(Math.abs(dx) / (nodeWidth / 2), Math.abs(dy) / (nodeHeight / 2), .001);
+  const ratio = 1 / Math.max(Math.abs(dx) / (nodeWidth / 2), Math.abs(dy) / (nodeCardHeight(node.node) / 2), .001);
   return { x: x + dx * ratio, y: y + dy * ratio };
 }
 
 type Anchors = Map<string, { x: number; y: number }>;
 const islandStepX = nodeWidth + 56;
 const islandStepY = nodeHeight + 56;
-const ringStepX = (nodeWidth + 48) * 1.5;
-const ringStepY = (nodeHeight + 48) * 1.5;
+const ringStepX = (nodeWidth + 48) * 1.15;
+const ringStepY = (nodeHeight + 48) * 1.15;
 
 function orderedNodes(graph: Graph) {
   return [...graph.nodes].sort((a, b) => a.id.localeCompare(b.id));
@@ -173,8 +207,12 @@ function labeledGroups(graph: Graph): GraphNode[][] {
   return [...groups].sort(([a], [b]) => a.localeCompare(b)).map(([, nodes]) => nodes);
 }
 
-function overlaps(a: { x: number; y: number }, b: { x: number; y: number }) {
-  return Math.abs(a.x - b.x) < nodeWidth + 32 && Math.abs(a.y - b.y) < nodeHeight + 32;
+function overlaps(a: { x: number; y: number }, b: { x: number; y: number }, aHeight = nodeHeight, bHeight = nodeHeight) {
+  return Math.abs(a.x - b.x) < nodeWidth + 32 && a.y < b.y + Math.max(nodeHeight, bHeight) + 32 && b.y < a.y + Math.max(nodeHeight, aHeight) + 32;
+}
+
+export function hasGroups(graph: Graph): boolean {
+  return labeledGroups(graph).some(group => group.length > 1 && !!group[0]!.groupLabel);
 }
 
 function topicIslands(graph: Graph, anchors: Anchors): Positioned[] {
@@ -194,7 +232,7 @@ function topicIslands(graph: Graph, anchors: Anchors): Positioned[] {
     }
     let base = anchors.get(group[0]!.id) ?? origin(lane);
     if (!anchors.has(group[0]!.id)) {
-      while (placed.some(n => overlaps(n, base))) { lane += 4; base = origin(lane); }
+      while (placed.some(n => overlaps(n, base, nodeCardHeight(n.node), nodeCardHeight(group[0]!)))) { lane += 4; base = origin(lane); }
     }
     const direction = base.y < rootPosition.y ? -1 : 1;
     let slot = 0;
@@ -204,33 +242,61 @@ function topicIslands(graph: Graph, anchors: Anchors): Positioned[] {
       do {
         candidate = { x: base.x + (slot % 2) * islandStepX, y: base.y + direction * Math.floor(slot / 2) * islandStepY };
         slot++;
-      } while (placed.some(n => overlaps(n, candidate)));
+      } while (placed.some(n => overlaps(n, candidate, nodeCardHeight(n.node), nodeCardHeight(node))));
       placed.push({ node, ...candidate });
     }
   });
   return placed.sort((a, b) => a.node.id.localeCompare(b.node.id));
 }
 
-function concentricRings(graph: Graph, anchors: Anchors): Positioned[] {
+function radialBranches(graph: Graph) {
   const root = topicNode(graph);
   if (!root) return [];
-  const nodes = orderedNodes(graph);
-  let levels = 1;
-  while (3 * levels * (levels + 1) < nodes.length - 1) levels++;
-  const center = anchors.get(root.id) ?? { x: ringStepX * levels + 48, y: ringStepY * levels + 48 };
-  const placed = nodes.flatMap(node => anchors.has(node.id) ? [{ node, ...anchors.get(node.id)! }] : []);
-  if (!anchors.has(root.id)) placed.push({ node: root, ...center });
-  const pending = nodes.filter(n => n.id !== root.id && !anchors.has(n.id));
-  let level = 1;
-  while (pending.length) {
-    const slots = anchors.size ? 6 * level : Math.min(6 * level, pending.length);
-    for (let slot = 0; slot < slots && pending.length; slot++) {
-      const angle = -Math.PI / 2 + slot * 2 * Math.PI / slots;
-      const candidate = { x: center.x + ringStepX * level * Math.cos(angle), y: center.y + ringStepY * level * Math.sin(angle) };
-      if (!placed.some(n => overlaps(n, candidate))) placed.push({ node: pending.shift()!, ...candidate });
+  const children = new Map(graph.nodes.map(node => [node.id, [] as GraphNode[]]));
+  for (const edge of relationships(graph)) {
+    if (edge.kind === 'parent' || edge.kind === 'legacy') {
+      const child = graph.nodes.find(node => node.id === edge.to);
+      if (child) children.get(edge.from)?.push(child);
     }
-    level++;
   }
+  for (const siblings of children.values()) siblings.sort((a, b) => a.id.localeCompare(b.id));
+  const weights = new Map<string, number>();
+  function weight(node: GraphNode): number {
+    const value = Math.max(1, children.get(node.id)!.reduce((sum, child) => sum + weight(child), 0));
+    weights.set(node.id, value);
+    return value;
+  }
+  weight(root);
+  const branches: { node: GraphNode; depth: number; angle: number }[] = [];
+  function place(node: GraphNode, depth: number, start: number, span: number) {
+    branches.push({ node, depth, angle: start + span / 2 });
+    const siblings = children.get(node.id)!;
+    const childSector = depth === 0 ? span : Math.min(span, Math.PI);
+    start += (span - childSector) / 2;
+    for (const child of siblings) {
+      const childSpan = depth === 0 ? childSector / siblings.length : childSector * weights.get(child.id)! / weights.get(node.id)!;
+      place(child, depth + 1, start, childSpan);
+      start += childSpan;
+    }
+  }
+  place(root, 0, -Math.PI, 2 * Math.PI);
+  return branches;
+}
+
+function concentricRings(graph: Graph): Positioned[] {
+  const branches = radialBranches(graph);
+  if (!branches.length) return [];
+  const levels = Math.max(...branches.map(branch => branch.depth));
+  let spacing = 1;
+  let placed: Positioned[];
+  do {
+    const rx = ringStepX * spacing, ry = ringStepY * spacing;
+    placed = branches.map(({ node, depth, angle }) => ({ node,
+      x: 48 + rx * (levels + depth * Math.cos(angle)),
+      y: 48 + ry * (levels + depth * Math.sin(angle)),
+    }));
+    spacing *= 1.05;
+  } while (placed.some((node, index) => placed.slice(index + 1).some(other => overlaps(node, other, nodeCardHeight(node.node), nodeCardHeight(other.node)))));
   return placed.sort((a, b) => a.node.id.localeCompare(b.node.id));
 }
 
@@ -241,19 +307,25 @@ export function graphDecorations(graph: Graph, view: GraphView, nodes: Positione
     if (members.length < 2 || !group[0]!.groupLabel) return [];
     const x = Math.min(...members.map(n => n.x)) - 32, y = Math.min(...members.map(n => n.y)) - 32 - groupHeaderHeight;
     return [{ id: group[0]!.groupLabel, title: groupTitle(group[0]!.groupLabel), x, y, width: Math.max(...members.map(n => n.x + nodeWidth)) + 32 - x,
-      height: Math.max(...members.map(n => n.y + nodeHeight)) + 32 - y }];
+      height: Math.max(...members.map(n => n.y + nodeCardHeight(n.node))) + 32 - y }];
   });
   const root = topicNode(graph), center = root && byId.get(root.id);
-  const rings = view !== 'rings' || !center ? [] : [...new Set(nodes.filter(n => n.node.id !== root!.id).map(n =>
-    Math.round(Math.hypot((n.x - center.x) / ringStepX, (n.y - center.y) / ringStepY))))].filter(level => level > 0).sort((a, b) => a - b).map(level =>
-      ({ level, x: center.x + nodeWidth / 2, y: center.y + nodeHeight / 2, rx: ringStepX * level, ry: ringStepY * level }));
+  const levels = new Map<number, Positioned>();
+  if (view === 'rings' && center) for (const branch of radialBranches(graph)) {
+    const node = byId.get(branch.node.id);
+    if (branch.depth && node && !levels.has(branch.depth)) levels.set(branch.depth, node);
+  }
+  const rings = [...levels].sort(([a], [b]) => a - b).map(([level, node]) => {
+    const radius = Math.hypot((node.x - center!.x) / ringStepX, (node.y - center!.y) / ringStepY);
+    return { level, x: center!.x + nodeWidth / 2, y: center!.y + nodeCardHeight(center!.node) / 2, rx: ringStepX * radius, ry: ringStepY * radius };
+  });
   return { islands, rings };
 }
 
 
 export function graphBounds(graph: Graph, view: GraphView, nodes: Positioned[]) {
   const guides = graphDecorations(graph, view, nodes);
-  const boxes = [...nodes.map(n => ({ x: n.x, y: n.y, width: nodeWidth, height: nodeHeight })), ...guides.islands,
+  const boxes = [...nodes.map(n => ({ x: n.x, y: n.y, width: nodeWidth, height: nodeCardHeight(n.node) })), ...guides.islands,
     ...guides.rings.map(r => ({ x: r.x - r.rx, y: r.y - r.ry, width: r.rx * 2, height: r.ry * 2 }))];
   if (!boxes.length) return { x: 0, y: 0, width: 272, height: 174 };
   const x = Math.min(...boxes.map(n => n.x)), y = Math.min(...boxes.map(n => n.y));

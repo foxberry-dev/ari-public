@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { comparisonLayout, graphChanges, layout, nodeHeight, nodeWidth, graphDecorations, groupTitle } from './graph';
+import { comparisonLayout, graphChanges, layout, nodeHeight, nodeCardHeight, nodeWidth, graphDecorations, groupTitle } from './graph';
 import { exampleNodes } from './example';
 import type { Graph } from './model';
 import { readFileSync } from 'node:fs';
@@ -24,7 +24,7 @@ describe('conversation decision graphs', () => {
     const changed = comparisonLayout(after, before, true);
     expect(changed.nodes.find(n => n.node.id === 'insurance')).toBeDefined();
     expect(comparisonLayout(after, before, false).nodes.some(n => n.node.id === 'insurance')).toBe(false);
-    for (const a of changed.nodes) for (const b of changed.nodes) if (a.node.id !== b.node.id && a.x === b.x) expect(Math.abs(a.y - b.y)).toBeGreaterThanOrEqual(nodeHeight);
+    for (const a of changed.nodes) for (const b of changed.nodes) if (a.node.id !== b.node.id && a.x === b.x) expect(a.y < b.y ? b.y - a.y : a.y - b.y).toBeGreaterThanOrEqual(nodeCardHeight(a.y < b.y ? a.node : b.node));
   });
   it('can compare individually acyclic graphs whose combined links would form a cycle', () => {
     const a = { ...exampleNodes[0], id: 'a', dependsOn: [] };
@@ -58,7 +58,11 @@ describe('typed decision relationships', () => {
     expect(spending.map(e => e.from).sort()).toEqual(['amount', 'budget', 'drinks', 'headcount']);
     expect(new Set(spending.map(e => e.to))).toEqual(new Set(['constraint:spending-limit']));
     expect(first.nodes).toEqual(graphLayout(graph, view).nodes);
-    for (const edge of first.edges) expect(edge.path).toMatch(/^M[-\d.e ]+ L[-\d.e ]+$/);
+    for (const edge of first.edges) {
+      const curved = view === 'islands' && edge.relation.kind === 'parent';
+      expect(edge.path.includes(' C')).toBe(curved);
+      expect(edge.path.includes(' L')).toBe(!curved);
+    }
     for (const a of first.nodes) for (const b of first.nodes) if (a !== b) {
       expect(Math.abs(a.x - b.x) >= 224 || Math.abs(a.y - b.y) >= 126).toBe(true);
     }
@@ -67,6 +71,27 @@ describe('typed decision relationships', () => {
     const anchors = new Map(first.nodes.map(n => [n.node.id, { x: n.x, y: n.y }]));
     const next = graphLayout(revised, view, anchors);
     expect(next.nodes.map(n => [n.node.id, n.x, n.y])).toEqual(first.nodes.map(n => [n.node.id, n.x, n.y]));
+  });
+
+  it('keeps sibling subtrees together and centers parents over their children', () => {
+    const tree: Graph = {
+      nodes: ['topic', 'protein', 'fruit', 'banana', 'yogurt', 'fat', 'berries'].map(id => ({
+        ...structuredClone(graph.nodes[0]!), id, title: id, content: id === 'protein' ? 'A longer answer '.repeat(12) : id,
+      })),
+      edges: [['topic', 'protein'], ['topic', 'fruit'], ['fruit', 'banana'], ['protein', 'yogurt'],
+        ['yogurt', 'fat'], ['fruit', 'berries']].map(([from, to]) => ({ id: `${from}-${to}`, kind: 'parent', from: from!, to: to! })),
+    };
+    const result = graphLayout(tree, 'hierarchy');
+    const nodes = new Map(result.nodes.map(node => [node.node.id, node]));
+    const center = (id: string) => { const node = nodes.get(id)!; return node.y + nodeCardHeight(node.node) / 2; };
+    expect(center('protein')).toBeLessThan(center('fruit'));
+    expect(center('yogurt')).toBeLessThan(center('banana'));
+    expect(center('yogurt')).toBeCloseTo(center('protein'));
+    expect(center('fat')).toBeCloseTo(center('yogurt'));
+    expect(center('fruit')).toBeCloseTo((center('banana') + center('berries')) / 2);
+    for (const a of result.nodes) for (const b of result.nodes) if (a !== b && a.x === b.x) {
+      expect(a.y + nodeCardHeight(a.node) + 36 <= b.y || b.y + nodeCardHeight(b.node) + 36 <= a.y).toBe(true);
+    }
   });
 
   it('compares relationship rules and retains removed constraints in Changed in either view', () => {
@@ -101,11 +126,11 @@ describe('graph arrangement guides', () => {
   const fixture = JSON.parse(readFileSync(new URL('../../fixtures/team-lunch-graph.json', import.meta.url), 'utf8'));
   const graph: Graph = fixture.commits.at(-1).graph;
 
-  it('centers the topic in rings independently of node status and relationship depth', () => {
+  it('places each parent depth on its own ring independently of status and input links', () => {
     const first = graphLayout(graph, 'rings');
     const unrelated = structuredClone(graph);
     unrelated.nodes.reverse();
-    unrelated.edges = [];
+    unrelated.edges = unrelated.edges!.filter(edge => edge.kind === 'parent');
     for (const node of unrelated.nodes) if (node.kind !== 'topic') node.kind = 'decided';
     expect(graphLayout(unrelated, 'rings').nodes.map(n => [n.node.id, n.x, n.y])).toEqual(first.nodes.map(n => [n.node.id, n.x, n.y]));
     const root = first.nodes.find(n => n.node.kind === 'topic')!;
@@ -113,8 +138,50 @@ describe('graph arrangement guides', () => {
     expect(guides.rings.length).toBeGreaterThan(1);
     for (const ring of guides.rings) {
       expect(ring.x).toBe(root.x + nodeWidth / 2);
-      expect(ring.y).toBe(root.y + nodeHeight / 2);
+      expect(ring.y).toBe(root.y + nodeCardHeight(root.node) / 2);
+      const depths = new Map([[root.node.id, 0]]);
+      while (depths.size < graph.nodes.length) for (const edge of graph.edges!) {
+        if (edge.kind === 'parent' && depths.has(edge.from)) depths.set(edge.to, depths.get(edge.from)! + 1);
+      }
+      for (const node of first.nodes.filter(node => depths.get(node.node.id) === ring.level)) {
+        expect(Math.hypot((node.x - root.x) / ring.rx, (node.y - root.y) / ring.ry)).toBeCloseTo(1);
+      }
     }
+  });
+
+  it('keeps descendants beside their parent and follows reparenting with cached positions', () => {
+    const branchGraph: Graph = {
+      nodes: ['topic', 'ingredients', 'powder', 'pb2', 'cocoa', 'flavor', 'brand', 'amount'].map(id => ({
+        ...structuredClone(graph.nodes[0]!), id, kind: id === 'topic' ? 'topic' : 'decided',
+      })),
+      edges: [['topic', 'ingredients'], ['topic', 'powder'], ['ingredients', 'pb2'], ['ingredients', 'cocoa'],
+        ['powder', 'flavor'], ['powder', 'brand'], ['pb2', 'amount']].map(([from, to]) => ({ id: `${from}-${to}`, kind: 'parent', from: from!, to: to! })),
+    };
+    function assertBranches(result: ReturnType<typeof graphLayout>, childId: string, parentId: string, otherId: string) {
+      const nodes = new Map(result.nodes.map(node => [node.node.id, node]));
+      const root = nodes.get('topic')!;
+      const guides = graphDecorations(branchGraph, 'rings', result.nodes).rings;
+      const angle = (id: string) => {
+        const node = nodes.get(id)!;
+        return Math.atan2((node.y - root.y) / guides[0]!.ry, (node.x - root.x) / guides[0]!.rx);
+      };
+      const distance = (a: number, b: number) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
+      expect(distance(angle(childId), angle(parentId))).toBeLessThan(distance(angle(childId), angle(otherId)));
+    }
+    const first = graphLayout(branchGraph, 'rings');
+    assertBranches(first, 'pb2', 'ingredients', 'powder');
+    assertBranches(first, 'cocoa', 'ingredients', 'powder');
+    assertBranches(first, 'amount', 'pb2', 'powder');
+    const anchors = new Map(first.nodes.map(node => [node.node.id, node]));
+    const moved = structuredClone(branchGraph);
+    moved.edges = moved.edges!.map(edge => edge.kind === 'parent' && edge.to === 'pb2' ? { ...edge, from: 'powder' } : edge);
+    const next = graphLayout(moved, 'rings', anchors);
+    assertBranches(next, 'pb2', 'powder', 'ingredients');
+    const guides = graphDecorations(moved, 'rings', next.nodes).rings;
+    const root = next.nodes.find(node => node.node.id === 'topic')!;
+    const amount = next.nodes.find(node => node.node.id === 'amount')!;
+    expect(guides.map(guide => guide.level)).toEqual([1, 2, 3]);
+    expect(Math.hypot((amount.x - root.x) / guides[2]!.rx, (amount.y - root.y) / guides[2]!.ry)).toBeCloseTo(1);
   });
 
   it('groups only explicit matching labels and formats concise headings', () => {
@@ -136,14 +203,18 @@ describe('graph arrangement guides', () => {
     }
     const unlabeled = structuredClone(graph);
     for (const node of unlabeled.nodes) delete node.groupLabel;
-    expect(graphDecorations(unlabeled, 'islands', graphLayout(unlabeled, 'islands').nodes).islands).toEqual([]);
+    const anchors = new Map(first.nodes.map(node => [node.node.id, node]));
+    const ungrouped = graphLayout(unlabeled, 'islands', anchors);
+    expect(ungrouped.nodes).toEqual(graphLayout(unlabeled, 'hierarchy').nodes);
+    expect(ungrouped.edges).toHaveLength(first.edges.length);
+    expect(graphDecorations(unlabeled, 'islands', ungrouped.nodes).islands).toEqual([]);
     expect(groupTitle('nicely-inside-the-panel')).toBe('Nicely inside the panel');
     const renamed = structuredClone(graph);
     renamed.nodes.find(node => node.groupLabel === 'attendance')!.groupLabel = 'invited-teammates';
     expect(graphChanges(graph, renamed).size).toBe(1);
   });
 
-  it.each(['islands', 'rings'] as const)('%s adds nodes without moving existing nodes or overlapping cards', view => {
+  it.each(['islands', 'rings'] as const)('%s adds nodes without overlapping cards', view => {
     const first = graphLayout(graph, view);
     const anchors = new Map(first.nodes.map(n => [n.node.id, { x: n.x, y: n.y }]));
     const grown = structuredClone(graph);
@@ -153,7 +224,7 @@ describe('graph arrangement guides', () => {
       grown.edges!.push({ id: `parent-${id}`, kind: 'parent', from: 'people', to: id });
     }
     const next = graphLayout(grown, view, anchors);
-    for (const old of first.nodes) {
+    if (view === 'islands') for (const old of first.nodes) {
       const node = next.nodes.find(n => n.node.id === old.node.id)!;
       expect([node.x, node.y]).toEqual([old.x, old.y]);
     }

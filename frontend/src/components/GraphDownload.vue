@@ -42,7 +42,7 @@ async function download(format: string) {
 }
 </script>
 <template>
-  <button ref="trigger" aria-label="Export graph" title="Export graph" aria-haspopup="menu" :aria-expanded="open" @click="toggle"><i class="pi pi-download" aria-hidden="true"/></button>
+  <button ref="trigger" aria-label="Export graph" aria-haspopup="menu" :aria-expanded="open" @click="toggle"><i class="pi pi-download" aria-hidden="true"/></button>
   <div ref="menu" popover="auto" class="export-menu" data-graph-export-menu role="menu" aria-label="Export graph" :aria-busy="busy" @toggle="state" @keydown="keyboard">
     <button v-for="format in ['svg', 'png', 'pdf']" :key="format" role="menuitem" :disabled="busy" @click="download(format)"><span>{{ format.toUpperCase() }}</span><small>{{ format === 'svg' ? 'Vector image' : format === 'png' ? 'Image' : 'Document' }}</small></button>
     <p v-if="error" class="export-error" role="alert">{{ error }}</p>

@@ -377,8 +377,11 @@ fn publication_schema_has_only_three_node_kinds_and_archived_question_types_cann
 fn lunch_relationships() -> Graph {
     let fixture: serde_json::Value =
         serde_json::from_str(include_str!("../fixtures/team-lunch-graph.json")).unwrap();
-    serde_json::from_value(fixture["commits"].as_array().unwrap().last().unwrap()["graph"].clone())
-        .unwrap()
+    serde_json::from_value::<crate::publication::PublicationGraph>(
+        fixture["commits"].as_array().unwrap().last().unwrap()["graph"].clone(),
+    )
+    .unwrap()
+    .into()
 }
 
 #[test]

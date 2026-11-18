@@ -17,6 +17,14 @@ describe('graph export serialization', () => {
     expect(svg).not.toContain('<script>');
     expect(svg).not.toContain('\u0000');
   });
+  it('exports every line of node titles and answers', () => {
+    const input = plan();
+    input.current.nodes[0]!.title = ['Heading one', 'Heading two', 'Heading three', 'Heading four'].join('\n');
+    input.current.nodes[0]!.content = Array.from({ length: 12 }, (_, i) => `Answer line ${i + 1}`).join('\n');
+    const { svg } = graphImage(input);
+    expect(svg).toContain('>Heading four</text>');
+    expect(svg).toContain('>Answer line 12</text>');
+  });
   it('exports only enabled relationship types while retaining node content', () => {
     const input = plan();
     input.options.inputs = false; input.options.constraints = false;

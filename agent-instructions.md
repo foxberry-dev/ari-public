@@ -55,15 +55,21 @@ After a revision conflict, read the latest state and reconsider the update befor
 
 ## Nodes and visible content
 
-Authored fields supply what the human sees. Put useful answers in node content, useful distinctions in alternative descriptions, and relationship explanations in their visible fields. Discuss supporting reasoning in the external conversation when appropriate. Do not add hidden notes, provenance records, or extra transcript fields to a publication.
+Authored fields supply what the human sees. Put complete answers in option text or free-text node content, and relationship explanations in their visible fields. Discuss supporting reasoning in the external conversation when appropriate. Do not add hidden notes, provenance records, or extra transcript fields to a publication.
 
 Use one node per distinct decision or quantity:
 
 - `topic` frames the shared subject. Its `title` names the topic and its `content` supplies useful context.
-- `assumption` records a concrete provisional agent answer. Supply two to twenty materially different `alternatives` and `selectedAlternative` matching an exact alternative label. Prefer two to four useful alternatives. The `title` identifies the question; `content` states the assumed answer. The human must be able to distinguish this provisional choice from a confirmed answer.
-- `decided` records a human-supported answer or a conclusion derived entirely from confirmed inputs. `content` states the answer. Set `selectedAlternative` when a listed alternative was selected; a free-text decision need not invent alternatives.
+- `assumption` records a concrete provisional agent answer. Supply two to twenty materially different `alternatives` and `selectedAlternative` matching an exact option ID. Prefer two to four useful alternatives. The `title` identifies the question; the selected option’s `text` states the assumed answer. Omit `content` when selecting an option. The human must be able to distinguish this provisional choice from a confirmed answer.
+- `decided` records a human-supported answer or a conclusion derived entirely from confirmed inputs. `content` states a free-text answer. Set `selectedAlternative` and omit `content` when a listed alternative was selected; a free-text decision need not invent alternatives.
 
-Alternatives are competing answers to the same question. Their labels are exact references used by `selectedAlternative` and constraints; keep them stable when their meaning is unchanged. An alternative's `recommended` flag expresses advice, not human agreement or selection. Do not use a pending question or empty placeholder as an assumption.
+Write titles and answers using these rules:
+
+- Keep titles short, specific, and independent of the chosen answer. Include the scope needed to identify the decision or quantity, such as `Greek yogurt quantity`. A subject label or direct question is acceptable; question marks and fixed word limits are not required.
+- Lead answers with the concrete outcome and preserve necessary units, conditions, and meaningful uncertainty, such as `150 g per smoothie.` A complete answer is independently understandable; it need not be a full sentence or repeat boilerplate such as “Use”.
+- Keep alternatives grammatically parallel and equally informative, answering the same decision or quantity. Compare `100 g per smoothie.` with `150 g per smoothie.` Keep supporting rationale separate from the answer and avoid repeating status words already shown by the UI.
+
+Alternatives are competing answers to the same question. Each has a stable `id` and exactly one complete answer `text`, for example `{"id":"with-yogurt","text":"Use Greek yogurt alongside protein powder."}`. There is no separate display label or description. Use the same single-answer format for chosen and unchosen options; text may wrap. `selectedAlternative` and constraint participants reference the exact option `id`; retain IDs when wording changes without changing the option’s identity. When an option is selected, omit node `content`; the server derives the node answer from its text. If `content` is supplied, it must equal that text exactly. An alternative's `recommended` flag expresses advice, not human agreement or selection. Do not use a pending question or empty placeholder as an assumption.
 
 Avoid duplicate questions disguised by different titles. A budget per person and a total budget are distinct quantities; two copies of the same per-person amount are not. Derived answers need genuine input relationships. If any necessary input is provisional, the derived answer remains an assumption. Do not invent a human statement to justify a calculation.
 
@@ -107,7 +113,7 @@ The label is both its exact membership key and the source of its visible heading
 - Each published label must have at least two non-topic members in that complete snapshot. If removal or regrouping leaves one member, omit `groupLabel` on that remaining node. Do not add an unrelated member to satisfy the count.
 - Name the subject directly. Do not put grouping words such as group, collection, cluster, or category in a label; the container already conveys that role. For example, use `food-pickup` (**Food pickup**), not `food-collection` or `food-group`. Use descriptive subjects, not `group-1`, `misc`, `other`, `questions`, `decided`, `assumptions`, an answer, a node ID, or a copied question title. Grouping describes navigation, not human agreement, certainty, causal dependence, or a compatibility rule. Keep actual relationships in `edges`.
 
-For example, a scripted pickup question and travel-method question can both have `"groupLabel":"food-pickup"`; a separate attendance question should remain unlabeled unless it belongs to another useful set of decisions. Labels do not replace either node's title. Group-label-only edits are presentation updates and do not require `confirmedChanges`; changes to confirmed answers still follow the rules below. Alternative labels remain ordinary exact human-readable answer labels: do not apply group-label slug rules to them.
+For example, a scripted pickup question and travel-method question can both have `"groupLabel":"food-pickup"`; a separate attendance question should remain unlabeled unless it belongs to another useful set of decisions. Labels do not replace either node's title. Group-label-only edits are presentation updates and do not require `confirmedChanges`; changes to confirmed answers still follow the rules below. Option IDs are stable references independent of their visible answer text and group labels.
 
 ### Changes to confirmed nodes
 
@@ -115,7 +121,7 @@ Confirmed decisions may change as the conversation develops. A decided node may 
 
 Preserve known facts and unrelated confirmed answers. A larger scope can introduce uncertainty without erasing facts already confirmed about the earlier scope. Do not demote confirmed answers during graph tidying or assume that a changed requirement overrides them.
 
-For every node that was `decided` in `currentGraph`, changing its `title`, `content`, `selectedAlternative`, or `kind`, or deleting it, requires its ID in `confirmedChanges`:
+For every node that was `decided` in `currentGraph`, changing its `title`, answer (including the selected option’s `text`), `selectedAlternative`, or `kind`, or deleting it, requires its ID in `confirmedChanges`:
 
 ```json
 {"confirmedChanges":["budget","venue"]}
@@ -129,7 +135,7 @@ Every graph includes complete `nodes` and `edges` arrays, including when empty. 
 
 - `parent`: `from` is the broader subject and `to` is its detail. Ask “This is a detail of what?” Parentage is not conversational order or a calculation dependency. Preserve it when only an answer changes.
 - `input`: `from` supplies information used to answer `to`. Its visible, nonblank `rationale` names the information consumed. Mere relevance does not justify an input. Input links are acyclic independently of the parent tree; a child may supply input to its parent.
-- `constraint`: give a short `label`, a concrete plain-text `rule`, `strength` (`requirement` or `preference`), and two to two hundred distinct `participants`. Each participant identifies `nodeId` and optionally an exact `alternative` label. State permitted or forbidden combinations, not just “these are related.” Keep a multi-node rule as one constraint. Identify the basis of a preference without inventing human agreement.
+- `constraint`: give a short `label`, a concrete plain-text `rule`, `strength` (`requirement` or `preference`), and two to two hundred distinct `participants`. Each participant identifies `nodeId` and optionally an exact `alternative` option ID. State permitted or forbidden combinations, not just “these are related.” Keep a multi-node rule as one constraint. Identify the basis of a preference without inventing human agreement.
 
 Check affected answers against recorded requirements and preferences before publishing. A conflict requires reconsidering provisional choices or asking the human; it does not authorize silently rewriting confirmed facts. Constraint text records reasoning, not an executable predicate or proof that compatibility was checked. Parent, input, and constraint relationships are independent; their combined visual loops can be valid.
 
@@ -165,7 +171,7 @@ The scripted human initially confirms four attendees and a €25 allowance, whil
       {"id":"topic","title":"Team lunch","kind":"topic","content":"Plan lunch together."},
       {"id":"people","title":"Who is joining?","kind":"decided","content":"Four teammates"},
       {"id":"budget","title":"Budget per person","kind":"decided","content":"€25 per person"},
-      {"id":"venue","title":"Where shall we eat?","kind":"assumption","content":"Office common room","alternatives":[{"label":"Office common room","description":"Use the shared office space."},{"label":"Nearby park","description":"Eat outside if conditions permit."}],"selectedAlternative":"Office common room"}
+      {"id":"venue","title":"Where shall we eat?","kind":"assumption","alternatives":[{"id":"office","text":"Use the office common room."},{"id":"park","text":"Eat in the nearby park if conditions permit."}],"selectedAlternative":"office"}
     ],
     "edges": [
       {"id":"parent-people","kind":"parent","from":"topic","to":"people"},
@@ -188,7 +194,7 @@ After creating revision 1, the scripted human confirms the office venue and incr
       {"id":"topic","title":"Team lunch","kind":"topic","content":"Plan lunch together."},
       {"id":"people","title":"Who is joining?","kind":"decided","content":"Four teammates"},
       {"id":"budget","title":"Budget per person","kind":"decided","content":"€30 per person"},
-      {"id":"venue","title":"Where shall we eat?","kind":"decided","content":"Office common room","alternatives":[{"label":"Office common room","description":"Use the shared office space."},{"label":"Nearby park","description":"Eat outside if conditions permit."}],"selectedAlternative":"Office common room"}
+      {"id":"venue","title":"Where shall we eat?","kind":"decided","alternatives":[{"id":"office","text":"Use the office common room."},{"id":"park","text":"Eat in the nearby park if conditions permit."}],"selectedAlternative":"office"}
     ],
     "edges": [
       {"id":"parent-people","kind":"parent","from":"topic","to":"people"},

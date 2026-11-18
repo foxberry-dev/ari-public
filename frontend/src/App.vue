@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import BerryMark from './components/BerryMark.vue';
 import ClarityLibrary from './components/ClarityLibrary.vue';
 import GraphWorkspace from './components/GraphWorkspace.vue';
+import GraphSearch from './components/GraphSearch.vue';
+import type { SearchContext, SearchMatch } from './graph-search';
 import RelatedLinks from './components/RelatedLinks.vue';
 import ShortcutReference from './components/ShortcutReference.vue';
 import ReferenceNotification from './components/ReferenceNotification.vue';
@@ -17,7 +19,18 @@ const cherUrl = ref<string | null>(null);
 const items = ref<Workspace[]>([]);
 const workspace = ref<Workspace | null>(null);
 const graphWorkspace = ref<InstanceType<typeof GraphWorkspace>>();
+const search = ref<InstanceType<typeof GraphSearch>>();
+const graphSearchContext = ref<SearchContext>();
+const searchQuery = ref('');
+const searchContext = computed<SearchContext | undefined>(() => {
+  const current = workspace.value;
+  if (!current) return;
+  if (graphSearchContext.value?.workspaceId === current.id) return graphSearchContext.value;
+  return { workspaceId: current.id, revision: current.revision, nodes: current.commits.at(-1)?.graph.nodes || [] };
+});
+let pendingSearch: SearchMatch | undefined;
 const fullscreen = ref(false);
+const allSelected = ref(false);
 const shortcuts = ref<InstanceType<typeof ShortcutReference>>();
 const relatedLinks = ref<InstanceType<typeof RelatedLinks>>();
 const notification = ref<InstanceType<typeof ReferenceNotification>>();
@@ -35,9 +48,35 @@ let disposeScrollbars: (() => void) | undefined;
 function routeId() { return decodeURIComponent(location.hash.match(/^#\/clarifications\/([^/]+)$/)?.[1] || ''); }
 function open(id: string) { location.hash = `/clarifications/${encodeURIComponent(id)}`; }
 function home() { location.hash = '/'; }
+function copyLink() {
+  if (workspace.value) void notification.value?.copy(new URL(`#/clarifications/${encodeURIComponent(workspace.value.id)}`, location.href).href, 'link');
+}
+async function copyReference(reference: string, onCopied?: () => void, kind: 'reference' | 'prompt' = 'reference', label?: string) {
+  if (await notification.value?.copy(reference, kind, label)) onCopied?.();
+}
+async function revealSearch(match: SearchMatch) {
+  if (workspace.value?.id !== match.workspaceId) { pendingSearch = match; open(match.workspaceId); return; }
+  await graphWorkspace.value?.revealNode(match.nodeId, match.revision);
+}
+watch(workspace, async value => {
+  if (!pendingSearch || pendingSearch.workspaceId !== value?.id) return;
+  const match = pendingSearch; pendingSearch = undefined;
+  await nextTick();
+  await graphWorkspace.value?.revealNode(match.nodeId, match.revision);
+});
 function keyboard(event: KeyboardEvent) {
+  if (!event.isComposing && event.ctrlKey && !event.altKey && !event.metaKey && event.key.toLowerCase() === 'f') {
+    event.preventDefault(); event.stopImmediatePropagation(); pendingKey = '';
+    graphWorkspace.value?.cancelNumber();
+    void nextTick().then(() => search.value?.show());
+    return;
+  }
+  if (search.value?.handleKey(event)) return;
+  if (event.target instanceof Element && event.target.closest('.graph-search')) return;
   if (relatedLinks.value?.handleKey(event)) return;
-  if (!/^\d$/.test(event.key) || event.ctrlKey || event.metaKey || event.altKey) graphWorkspace.value?.cancelNumber();
+  if (graphWorkspace.value?.handleSelectionShortcutKey(event)) return;
+  if (['.', ';', 'a', 't'].includes(event.key) && (document.querySelector('dialog:modal') || event.target instanceof Element && event.target.closest('input,textarea,[contenteditable],[role="textbox"]'))) return;
+  if ((!/^\d$/.test(event.key) && event.key !== 'Enter') || event.ctrlKey || event.metaKey || event.altKey) graphWorkspace.value?.cancelNumber();
   if (event.isComposing || event.altKey || event.metaKey) return;
   const exit = event.key === 'Escape' || event.ctrlKey && event.key === '[';
   if (exit) {
@@ -61,6 +100,12 @@ function keyboard(event: KeyboardEvent) {
       return;
     }
     if (document.querySelector('[role="dialog"]:not([popover])')) return;
+    if (graphWorkspace.value?.closeOptions()) {
+      event.preventDefault(); event.stopImmediatePropagation(); return;
+    }
+    if (graphWorkspace.value?.clearSelection()) {
+      event.preventDefault(); event.stopImmediatePropagation(); return;
+    }
     if (fullscreen.value) {
       event.preventDefault(); event.stopImmediatePropagation(); fullscreen.value = false; return;
     }
@@ -82,12 +127,12 @@ function keyboard(event: KeyboardEvent) {
     if (pendingKey === event.key && Date.now() < pendingUntil) {
       pendingKey = '';
       if (event.key === 'g') graphWorkspace.value?.shortcut('gg');
-      else void notification.value?.copy(`ari@${workspace.value.id}`);
+      else graphWorkspace.value?.copyReference();
     } else { pendingKey = event.key; pendingUntil = Date.now() + 1000; }
     return;
   }
   pendingKey = '';
-  if (event.key === 'u' && !event.shiftKey && !fullscreen.value && !document.querySelector('dialog:modal') && !(event.target instanceof Element && event.target.closest('input,textarea,[contenteditable]'))) {
+  if (event.key === 'u' && !event.shiftKey && !document.querySelector('dialog:modal') && !(event.target instanceof Element && event.target.closest('input,textarea,[contenteditable]'))) {
     event.preventDefault(); event.stopImmediatePropagation();
     if (!event.repeat) void relatedLinks.value?.toggle();
   } else if (event.key === '?') {
@@ -110,7 +155,10 @@ async function refresh() {
     }
   } finally { if (request === sequence) loading.value = false; }
 }
-async function navigate() { fullscreen.value = false; pendingKey = ''; error.value = ''; await refresh(); }
+async function navigate() {
+  if (pendingSearch?.workspaceId !== routeId()) { pendingSearch = undefined; search.value?.close(); }
+  fullscreen.value = false; pendingKey = ''; error.value = ''; await refresh();
+}
 onMounted(() => {
   void loadCherUrl().then(url => { cherUrl.value = url; });
   disposeScrollbars = installOverlayScrollbars();
@@ -127,15 +175,19 @@ onUnmounted(() => { disposeScrollbars?.(); events?.close(); clearInterval(interv
 </script>
 <template>
   <div v-if="!loading" class="app" :style="changeTheme" :class="{ 'in-workspace': !!workspace, fullscreen: !!workspace && fullscreen }">
-    <header class="page-header" :inert="fullscreen"><div class="header-inner" :class="workspace ? 'workspace-header' : 'library-header'">
+    <header class="page-header"><div class="header-inner" :class="workspace ? 'workspace-header' : 'library-header'">
       <a v-if="workspace" class="clarification-back" href="#/" aria-label="Back to clarity library" title="Back to clarity library"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg><span>{{ workspace.title }}</span></a>
+      <button v-if="workspace" class="copy-link" aria-label="Copy clarification link" @click="copyLink"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/><path d="M10 2h7l5 5v8a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2ZM17 2v5h5"/></svg></button>
       <div v-else class="library-identity">
         <a v-if="cherUrl && !displayedId" class="cher-back" :href="cherUrl" aria-label="Back to Cher" title="Back to Cher"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></a>
         <button class="identity quiet" aria-label="Ari clarity library" @click="home"><BerryMark/><span class="wordmark">ari</span></button>
       </div>
       <span class="spacer"/>
+      <GraphSearch ref="search" :workspaces="items" :context="searchContext" @reveal="revealSearch" @query-change="searchQuery = $event"/>
+      <button v-if="workspace" class="header-fullscreen" aria-label="Toggle fullscreen canvas" :aria-pressed="fullscreen" @click="fullscreen = !fullscreen"><svg viewBox="0 0 24 24" aria-hidden="true"><path v-if="fullscreen" d="M3 8h5V3m13 5h-5V3M3 16h5v5m13-5h-5v5"/><path v-else d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+      <button v-if="workspace" class="header-select-all" aria-label="Toggle select all nodes" :aria-pressed="allSelected" @click="graphWorkspace?.toggleSelectAll()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="14" height="14" rx="2"/><path d="M16 3H5a2 2 0 0 0-2 2v11m8-2 2 2 4-5"/></svg></button>
       <ShortcutReference v-if="workspace" ref="shortcuts"/>
-      <RelatedLinks v-if="workspace" ref="relatedLinks" :key="workspace.id" :links="workspace.links" :hidden="fullscreen"/>
+      <RelatedLinks v-if="workspace" ref="relatedLinks" :key="workspace.id" :links="workspace.links"/>
       <span class="connection" :title="connected ? 'Live graph updates are connected.' : 'Reconnecting to the Ari server'"><i class="pi" :class="connected ? 'pi-check-circle good-text' : 'pi-exclamation-circle gold-text'"/><span>{{ connected ? 'Connected' : 'Reconnecting' }}</span></span>
     </div></header>
     <ReferenceNotification ref="notification"/>
@@ -143,6 +195,14 @@ onUnmounted(() => { disposeScrollbars?.(); events?.close(); clearInterval(interv
     <div v-if="error" class="error-notice" role="alert"><span>{{ error }}</span><button @click="refresh">Retry</button></div>
     <ClarityLibrary v-if="!workspace && !displayedId" v-model:state="libraryState" :items="items" :loading="loading" @open="open" @changed="refresh" @deleted="(receipt, titles) => deletionNotification?.deleted(receipt, titles)"/>
     <main v-else-if="!workspace" class="container loading-page"><p>This clarification could not be opened.</p><button @click="home">Back to library</button></main>
-    <GraphWorkspace v-else ref="graphWorkspace" v-model:fullscreen="fullscreen" :key="workspace.id" :workspace="workspace" @copy-reference="notification?.copy($event)"/>
+    <GraphWorkspace v-else ref="graphWorkspace" v-model:fullscreen="fullscreen" v-model:all-selected="allSelected" :key="workspace.id" :workspace="workspace" :search-query="searchQuery" @copy-reference="copyReference" @search-context="graphSearchContext = $event"/>
   </div>
 </template>
+
+<style scoped>
+.copy-link,.header-fullscreen,.header-select-all{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:32px;min-height:32px;padding:7px;border-color:transparent;color:var(--muted)}
+.copy-link svg,.header-fullscreen svg,.header-select-all svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round}
+.copy-link:hover,.header-fullscreen:hover,.header-select-all:hover{background:var(--raised)}
+.copy-link:focus-visible,.header-fullscreen:focus-visible,.header-select-all:focus-visible{outline:none;background:#575757;color:var(--text)}
+.header-fullscreen[aria-pressed="true"],.header-select-all[aria-pressed="true"]{color:var(--accent)}
+</style>

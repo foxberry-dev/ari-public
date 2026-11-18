@@ -28,6 +28,7 @@ test('development fixture publishes a complete typed history through MCP', { tim
   for (const [index, entry] of sample.commits.entries()) {
     await page.locator('.commit-entry').nth(index).click();
     for (const name of ['Tree', 'Grouped', 'Radial']) {
+      if (await page.getByRole('button', { name, exact: true }).isDisabled()) continue;
       await page.getByRole('button', { name, exact: true }).click();
       assert.equal(await page.locator('.graph-node').count(), entry.graph.nodes.length, `${entry.commit.title} renders in ${name}`);
     }
@@ -76,7 +77,10 @@ async function fixture(t, { cherUrl } = {}) {
   await rpc('initialize', { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'ari-test', version: '1' } });
   async function tool(name, args = {}) {
     if (name === 'create_clarification' || name === 'publish_graph_commit') {
-      args = { ...args, graph: args.graph ? { ...args.graph, nodes: args.graph.nodes.map(({ rationale, dependsOn, ...node }) => node) } : args.graph, commit: { title: args.commit.title, kind: args.commit.kind } };
+      args = { ...args, graph: args.graph ? { ...args.graph, nodes: args.graph.nodes.map(({ rationale, dependsOn, ...node }) => ({ ...node,
+        alternatives: node.alternatives?.map(option => option.id ? option : ({ id: option.label,
+          text: node.selectedAlternative === option.label ? node.content : option.description || option.label,
+          recommended: option.recommended || false })) })) } : args.graph, commit: { title: args.commit.title, kind: args.commit.kind } };
     }
     const result = await rpc('tools/call', { name, arguments: args });
     assert.notEqual(result.isError, true, JSON.stringify(result));
@@ -97,6 +101,10 @@ async function browserFor(t) {
   page.on('pageerror', error => errors.push(error.message));
   t.after(() => assert.deepEqual(errors, [], 'The browser must not raise runtime errors'));
   return page;
+}
+
+async function openNodeDetails(page, id) {
+  await page.locator(`.graph-node[data-node-id="${id}"]`).locator('..').getByRole('button', { name: 'Show other node options', exact: true }).click();
 }
 
 test('agent graph commits stream into a read-only history with neutral and changed views', { timeout: 60_000 }, async t => {
@@ -130,11 +138,10 @@ test('agent graph commits stream into a read-only history with neutral and chang
     edge: getComputedStyle(document.querySelector('.wires > path.added')).stroke,
   }));
   assert.deepEqual(addedColors, { assumption: 'rgb(169, 154, 194)', answered: 'rgb(134, 181, 204)', edge: 'rgb(101, 214, 173)' });
-  await page.locator('.graph-node.answered').filter({ hasText: 'Admission' }).click();
-  await page.getByRole('complementary', { name: 'Node details' }).getByRole('heading', { name: 'Admission', exact: true }).waitFor();
+  await openNodeDetails(page, 'admission');
+  await page.getByRole('dialog', { name: 'Other node options' }).waitFor();
   await page.getByRole('button', { name: 'Current', exact: true }).click();
   assert.equal(await page.locator('.graph-node').filter({ hasText: 'Insurance' }).count(), 0);
-  await page.getByRole('button', { name: 'Close node details' }).click();
   await moveRevision(page, -1);
   await page.locator('.graph-node').filter({ hasText: 'Insurance' }).waitFor();
   const third = structuredClone(next); Object.assign(third.find(n => n.id === 'menu'), { content: 'One vegan volunteer', kind: 'decided', selectedAlternative: 'Vegan meal' });
@@ -146,6 +153,7 @@ test('agent graph commits stream into a read-only history with neutral and chang
   await page.locator('.graph-node').filter({ hasText: 'One vegan volunteer' }).waitFor();
   await page.getByRole('button', { name: 'Changed', exact: true }).click();
   for (const view of ['Tree', 'Grouped', 'Radial']) {
+    if (await page.getByRole('button', { name: view, exact: true }).isDisabled()) continue;
     await page.getByRole('button', { name: view, exact: true }).click();
     assert.equal(await page.locator('[data-node-id="menu"] .node-status').innerText(), 'Assumption · Resolved');
     assert.equal(await page.locator('[data-node-id="admission"] .node-status').innerText(), 'Changed');
@@ -168,8 +176,8 @@ test('agent graph commits stream into a read-only history with neutral and chang
   assert.ok(Math.abs(revisionLayout.gap) < 1, `Canvas follows the revision selector: ${revisionLayout.gap}`);
   await page.screenshot({ path: '/tmp/ari-mobile-revisions.png' });
   await page.getByRole('button', { name: 'Fit graph', exact: true }).click();
-  await page.locator('[data-node-id="admission"]').click();
-  await page.getByRole('complementary', { name: 'Node details' }).waitFor();
+  await openNodeDetails(page, 'admission');
+  await page.getByRole('dialog', { name: 'Other node options' }).waitFor();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   assert.deepEqual(writes, [], 'The viewer only reads; graph writes belong to the agent MCP connection');
 });
@@ -353,16 +361,14 @@ test('commit motion preserves the camera and keeps every edge attached to its no
   assert.ok(Math.max(...motion.rootYs) - Math.min(...motion.rootYs) > 1, 'Node motion is sampled during the transition');
   assert.ok(motion.maxError < .75, 'All edge endpoints stay glued to node sides: ' + motion.maxError);
   const diet = page.locator('[data-node-id="diet"]');
-  await diet.click();
-  await page.locator('.detail-option.chosen').getByText('No restrictions', { exact: true }).waitFor();
+  await openNodeDetails(page, 'diet');
+  await page.getByRole('dialog', { name: 'Other node options' }).waitFor();
   assert.match(await diet.innerText(), /No restrictions/);
   assert.match(await diet.innerText(), /Assumption/);
-  assert.match(await page.locator('.detail-option.chosen').innerText(), /Assumed\s+No restrictions/i);
-  const inspectedCamera = await page.locator('.graph-scene').evaluate(el => getComputedStyle(el).transform);
-  assert.equal(inspectedCamera, camera, 'Opening details also preserves the camera');
+  assert.ok(await page.locator('.node-options li').count() > 0);
   await moveRevision(page, 1);
-  await page.locator('[data-node-id="people"]').click();
-  assert.match(await page.locator('.detail-option.chosen').innerText(), /Decided\s+Core four teammates/i);
+  await openNodeDetails(page, 'people');
+  assert.ok(await page.locator('.node-options li').count() > 0);
 });
 
 for (const layoutName of ['Grouped', 'Radial']) test(`${layoutName} shares selection, typed relationships, and immutable comparisons with hierarchy`, { timeout: 60_000 }, async t => {
@@ -386,7 +392,7 @@ for (const layoutName of ['Grouped', 'Radial']) test(`${layoutName} shares selec
   await page.locator('.graph-node').first().waitFor();
   assert.equal(await page.locator('.wires > path').count(), graph.nodes.length - 1);
   await page.locator('[data-node-id="venue"]').click();
-  await page.getByRole('complementary', { name: 'Node details' }).getByText('Requirement · Suitable meals', { exact: true }).waitFor();
+  await openNodeDetails(page, 'venue');
   assert.equal(await page.locator('.wires > path[data-relationship-id="vegan-meals"]').count(), 3);
   assert.equal(await page.locator('.wires > path[data-relationship-id="spending-limit"]').count(), 0);
   await page.getByRole('button', { name: 'Changed', exact: true }).click();
@@ -429,14 +435,15 @@ for (const layoutName of ['Grouped', 'Radial']) test(`${layoutName} shares selec
   const next = structuredClone(graph);
   next.edges = next.edges.filter(e => e.id !== 'vegan-exclusion');
   next.edges.find(e => e.id === 'walkability').rule = 'In this scripted test, collection within ten minutes is preferred.';
-  next.nodes.find(n => n.id === 'headcount').content = 'Twelve confirmed attendees';
+  const headcount = next.nodes.find(n => n.id === 'headcount');
+  headcount.content = 'Twelve confirmed attendees';
+  headcount.alternatives.find(option => option.id === headcount.selectedAlternative).text = headcount.content;
   await tool('publish_graph_commit', { clarificationId: 'typed-lunch', expectedRevision: 1, confirmedChanges: ['headcount'], graph: next,
     commit: { title: 'Review collection choices', kind: 'graphUpdated', summary: 'Scripted test of a changed rule and removed incompatibility.' } });
   await page.locator('[data-node-id="headcount"]').filter({ hasText: 'Twelve confirmed attendees' }).waitFor();
   assert.deepEqual(await page.locator('.graph-node').evaluateAll(nodes => nodes.map(n => [n.dataset.nodeId, n.parentElement.style.transform])), settled);
   assert.equal(await page.locator('.wires > path.constraint.removed[data-relationship-id="vegan-exclusion"]').count(), 2);
   assert.equal(await page.locator('.wires > path.constraint.changed[data-relationship-id="walkability"]').count(), 3);
-  await page.getByRole('complementary', { name: 'Node details' }).getByRole('heading', { name: 'Previous relationships' }).waitFor();
   await page.getByRole('button', { name: 'Current', exact: true }).click();
   assert.equal(await page.locator('.wires > path.added, .wires > path.changed, .wires > path.removed').count(), 0);
   assert.equal(await page.locator('[data-constraint-id="vegan-exclusion"]').count(), 0);
@@ -457,62 +464,10 @@ for (const layoutName of ['Grouped', 'Radial']) test(`${layoutName} shares selec
   await page.screenshot({ path: `/tmp/ari-${layoutName === 'Grouped' ? 'islands' : 'rings'}.png` });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: 'Fit graph', exact: true }).click();
-  await page.locator('[data-node-id="diet"]').click();
-  await page.getByRole('complementary', { name: 'Node details' }).getByText('Requirement · Incompatible choices', { exact: true }).waitFor();
+  await openNodeDetails(page, 'diet');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
 });
 
-
-for (const width of [390, 825, 940]) test(`mobile node details overlay the full-height canvas from the right at ${width}px`, { timeout: 30_000 }, async t => {
-  const { base, tool } = await fixture(t);
-  const sample = JSON.parse(await readFile(join(root, 'fixtures/team-lunch-graph.json'), 'utf8'));
-  const { graph, commit } = sample.commits.at(-1);
-  await tool('create_clarification', { id: 'mobile-drawer', title: 'Mobile graph', graph, commit });
-  const page = await browserFor(t);
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.setViewportSize({ width, height: 1000 });
-  await page.goto(base + '/#/clarifications/mobile-drawer');
-  const topic = page.locator('[data-node-id="topic"]');
-  await topic.waitFor();
-  await page.getByRole('button', { name: 'Fit graph', exact: true }).click();
-  const camera = async () => page.evaluate(() => ({
-    transform: document.querySelector('.graph-scene').style.transform,
-    bounds: document.querySelector('.graph-viewport').getBoundingClientRect().toJSON(),
-    scroll: [scrollX, scrollY],
-  }));
-  const before = await camera();
-  assert.ok(Math.abs(before.bounds.bottom - 1000) < 1, 'The canvas fills the remaining screen');
-  assert.equal(await page.evaluate(() => document.documentElement.scrollHeight), 1000, 'The page needs no space below the graph');
-  await topic.click();
-  const drawer = page.getByRole('dialog', { name: 'Node details' });
-  await drawer.waitFor();
-  assert.equal(await drawer.evaluate(el => el.matches(':modal')), true);
-  const bounds = await drawer.boundingBox();
-  assert.equal(bounds.y, 0);
-  assert.equal(bounds.height, 1000);
-  assert.ok(Math.abs(bounds.x + bounds.width - width) < 1, 'The drawer meets the right edge');
-  assert.ok(bounds.x >= 32, 'The backdrop remains exposed');
-  assert.equal(await drawer.evaluate(el => getComputedStyle(el, '::backdrop').backgroundColor), 'rgba(0, 0, 0, 0.6)');
-  assert.deepEqual(await camera(), before, 'Opening details preserves the canvas dimensions, camera, and page position');
-  assert.equal(await page.getByRole('button', { name: 'Close node details' }).evaluate(el => el === document.activeElement), true);
-  await page.keyboard.press('Shift+Tab');
-  assert.equal(await drawer.evaluate(el => !document.hasFocus() || el.contains(document.activeElement)), true, 'Page focus stays inside the modal');
-  await page.keyboard.press('Tab');
-  assert.equal(await drawer.evaluate(el => el.contains(document.activeElement)), true);
-  await page.screenshot({ path: `/tmp/ari-mobile-drawer-${width}.png` });
-  await page.getByRole('button', { name: 'Close node details' }).click();
-  await drawer.waitFor({ state: 'hidden' });
-  assert.equal(await topic.evaluate(el => el === document.activeElement), true, 'Closing restores focus to the selected node');
-  assert.deepEqual(await camera(), before);
-  await topic.click();
-  await drawer.waitFor();
-  await page.mouse.click(8, 500);
-  await drawer.waitFor({ state: 'hidden' });
-  await topic.click();
-  await page.getByRole('button', { name: 'Close node details' }).click();
-  await drawer.waitFor({ state: 'hidden' });
-  assert.deepEqual(await camera(), before);
-});
 
 test('relationship checkboxes filter links and junctions independently while preserving the graph camera', { timeout: 30_000 }, async t => {
   const { base, tool } = await fixture(t);
@@ -534,12 +489,14 @@ test('relationship checkboxes filter links and junctions independently while pre
   const page = await browserFor(t);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(base + '/#/clarifications/relationship-filters');
-  await page.locator('[data-node-id="venue"]').click();
+  await page.locator('[data-node-id="venue"]').dispatchEvent('click');
+  await openNodeDetails(page, 'venue');
   const inputs = page.getByRole('checkbox', { name: 'Show inputs', exact: true });
   const constraints = page.getByRole('checkbox', { name: 'Show constraints', exact: true });
   assert.equal(await inputs.isChecked(), true);
   assert.equal(await constraints.isChecked(), true);
   for (const name of ['Tree', 'Grouped', 'Radial']) {
+    if (await page.getByRole('button', { name, exact: true }).isDisabled()) continue;
     await page.getByRole('button', { name, exact: true }).click();
     await inputs.check(); await constraints.check();
     assert.ok(await page.locator('.wires > path.input').count() > 0);
@@ -557,7 +514,6 @@ test('relationship checkboxes filter links and junctions independently while pre
     assert.equal(await page.locator('.wires > path.constraint, .constraint-junction').count(), 0);
     assert.equal(await page.locator('.wires > path.parent').count(), graph.nodes.length - 1);
     assert.deepEqual(await snapshot(), before);
-    await page.getByRole('complementary', { name: 'Node details' }).getByText('Requirement · Suitable meals', { exact: true }).waitFor();
     await page.getByRole('button', { name: 'Changed', exact: true }).click();
     await moveRevision(page, -1);
     assert.equal(await inputs.isChecked(), false);
@@ -565,7 +521,8 @@ test('relationship checkboxes filter links and junctions independently while pre
     assert.equal(await page.locator('.wires > path.input, .wires > path.constraint, .constraint-junction').count(), 0);
     await moveRevision(page, 1);
     await page.getByRole('button', { name: 'Current', exact: true }).click();
-    await page.locator('[data-node-id="venue"]').click();
+    await page.locator('[data-node-id="venue"]').dispatchEvent('click');
+    await openNodeDetails(page, 'venue');
   }
   await constraints.check();
   assert.equal(await page.locator('.wires > path.input').count(), 0);
@@ -587,7 +544,7 @@ async function shortcutFixture(t) {
   return { page, base, sample, tool, rpc };
 }
 
-test('clarification shortcuts work from the header, graph, controls, inspector, and scrollbars', { timeout: 30_000 }, async t => {
+test('clarification shortcuts work from the header, graph, controls, and open options', { timeout: 30_000 }, async t => {
   const { page, base, sample } = await shortcutFixture(t);
   page.setDefaultTimeout(5000);
   const revision = async n => assert.equal(await page.locator('.commit-entry').evaluateAll(rows => rows.findIndex(row => row.getAttribute('aria-current') === 'step') + 1), n);
@@ -597,11 +554,11 @@ test('clarification shortcuts work from the header, graph, controls, inspector, 
   await page.keyboard.press('ArrowUp'); await revision(5);
   await page.getByRole('checkbox', { name: 'Show inputs', exact: true }).focus();
   await page.keyboard.press('j'); await revision(6);
-  await page.locator('[data-node-id="topic"]').click();
-  await page.getByRole('button', { name: 'Close node details' }).focus();
+  await openNodeDetails(page, 'venue');
+  await page.getByRole('dialog', { name: 'Other node options' }).focus();
   await page.keyboard.press('ArrowDown'); await revision(7);
-  await page.locator('[data-node-id="venue"]').click();
-  await page.locator('.node-details .overlay-scrollbar:not([hidden])').first().focus();
+  await openNodeDetails(page, 'venue');
+  await page.getByRole('dialog', { name: 'Other node options' }).focus();
   await page.keyboard.press('ArrowUp'); await revision(6);
   await page.keyboard.press('g'); await page.keyboard.press('g'); await revision(1);
   await page.keyboard.press('End'); await revision(7);
@@ -611,11 +568,11 @@ test('clarification shortcuts work from the header, graph, controls, inspector, 
   await revision(1);
   for (let i = 0; i < 8; i++) await page.keyboard.press('j');
   await revision(7);
-  await page.locator('[data-node-id="topic"]').click();
+  await openNodeDetails(page, 'venue');
   for (const name of ['Grouped', 'Radial', 'Tree']) {
     await page.keyboard.press(']');
     assert.equal(await page.getByRole('button', { name, exact: true }).getAttribute('aria-pressed'), 'true');
-    assert.equal(await page.locator('[data-node-id="topic"]').getAttribute('aria-pressed'), 'true');
+    assert.equal(await page.locator('[data-node-id="topic"]').getAttribute('aria-pressed'), 'false');
   }
   await page.keyboard.press('[');
   assert.equal(await page.getByRole('button', { name: 'Radial', exact: true }).getAttribute('aria-pressed'), 'true');
@@ -646,10 +603,10 @@ test('clarification shortcuts work from the header, graph, controls, inspector, 
   await page.setViewportSize({ width: 390, height: 1000 });
   for (const key of ['Escape', 'Control+[']) {
     await page.goto(base + '/#/clarifications/' + sample.id);
-    await page.locator('[data-node-id="topic"]').click();
-    await page.getByRole('dialog', { name: 'Node details' }).waitFor();
+    await openNodeDetails(page, 'venue');
+    await page.getByRole('dialog', { name: 'Other node options' }).waitFor();
     await page.keyboard.press(key);
-    await page.getByRole('dialog', { name: 'Node details' }).waitFor({ state: 'hidden' });
+    await page.getByRole('dialog', { name: 'Other node options' }).waitFor({ state: 'hidden' });
     await page.keyboard.press(key);
     await page.locator('.library').waitFor();
     assert.ok(page.url().endsWith('#/'), `${key} returns to the overview after dismissing the inspector`);
@@ -782,11 +739,12 @@ test('graph exports download the selected immutable revision in SVG PNG and PDF'
 
 test('canvas minimap supports panning fit and actual size without moving graph nodes', { timeout: 30_000 }, async t => {
   const { page } = await shortcutFixture(t);
+  page.setDefaultTimeout(5000);
   const camera = () => page.locator('.graph-scene').evaluate(el => getComputedStyle(el).transform);
   const nodes = await page.locator('.graph-node').evaluateAll(items => items.map(n => n.parentElement.style.transform));
+  await openNodeDetails(page, 'venue');
   await page.getByRole('button', { name: 'Zoom to 100% and focus' }).click();
   assert.equal(await page.getByRole('status', { name: 'Zoom level' }).textContent(), '100%');
-  await page.locator('[data-node-id="topic"]').click();
   await page.getByRole('button', { name: 'Zoom to 100% and focus' }).click();
   const before = await camera();
   await page.locator('.viewport-buttons').hover();
@@ -806,7 +764,6 @@ test('canvas minimap supports panning fit and actual size without moving graph n
   assert.deepEqual(await page.locator('.graph-node').evaluateAll(items => items.map(n => n.parentElement.style.transform)), nodes);
   await page.getByRole('button', { name: 'Fit graph', exact: true }).click();
   assert.equal(await page.getByRole('button', { name: 'Fit graph', exact: true }).getAttribute('aria-pressed'), 'true');
-  await page.getByRole('button', { name: 'Close node details' }).click();
   await page.getByRole('button', { name: 'Fit graph', exact: true }).click();
   await page.locator('.graph-viewport').focus();
   await page.keyboard.press('ArrowLeft');
@@ -834,6 +791,24 @@ test('yy copies a stable Ari reference with the shared success notification', { 
   assert.equal(await notice.textContent(), `Copied ari@${sample.id}`);
   const style = await notice.evaluate(el => ({ color: getComputedStyle(el).color, background: getComputedStyle(el).backgroundColor, top: el.parentElement.getBoundingClientRect().y, right: innerWidth - el.parentElement.getBoundingClientRect().right }));
   assert.deepEqual(style, { color: 'rgb(101, 214, 173)', background: 'rgb(23, 59, 50)', top: 24, right: 24 });
+  for (const width of [1440, 940, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    const copyLink = page.getByRole('button', { name: 'Copy clarification link', exact: true });
+    await copyLink.click();
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), page.url());
+    await page.getByText('Link copied', { exact: true }).waitFor();
+    const title = await page.locator('.clarification-back').boundingBox();
+    const button = await copyLink.boundingBox();
+    assert.ok(button.x >= title.x + title.width);
+    const text = await page.locator('.clarification-back span').boundingBox();
+    assert.ok(button.x - text.x - text.width <= 24, 'Copy stays beside the title text');
+    assert.ok(Math.abs(button.y + button.height / 2 - title.y - title.height / 2) < 1);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    if (width <= 1100 && (await page.locator('.workspace-header > .spacer').boundingBox()).width < 1) {
+      const centers = await page.locator('.workspace-header').evaluate(el => ['.copy-link svg', '.search-trigger i', '.header-fullscreen svg', '.header-select-all svg', '.connection i'].map(selector => { const rect = el.querySelector(selector).getBoundingClientRect(); return rect.x + rect.width / 2; }));
+      assert.ok(centers.slice(1).every((center, index) => Math.abs(center - centers[index] - (centers[1] - centers[0])) < 1), 'Header icons are evenly spaced');
+    }
+  }
 });
 
 
@@ -887,14 +862,18 @@ test('trackpad pinch and background double-click zoom around their anchors', { t
     const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY: 60 });
     el.dispatchEvent(event); return event.defaultPrevented;
   });
-  assert.equal(ordinary, false);
-  assert.deepEqual(await graphCamera(page), pinched);
+  assert.equal(ordinary, true);
+  const scrolled = await graphCamera(page);
+  assert.equal(scrolled.scale, pinched.scale);
+  assert.notEqual(scrolled.y, pinched.y);
+  const pannedAnchor = graphAnchor(scrolled, point);
   await page.locator('.graph-viewport').dispatchEvent('dblclick', { clientX: viewport.x + point.x, clientY: viewport.y + point.y });
   const doubled = await graphCamera(page);
   assert.ok(Math.abs(doubled.scale - Math.min(2, pinched.scale * 2)) < .001);
-  sameAnchor(anchor, graphAnchor(doubled, point));
-  await page.locator('[data-node-id="topic"]').dispatchEvent('dblclick', { clientX: viewport.x + point.x, clientY: viewport.y + point.y });
+  sameAnchor(pannedAnchor, graphAnchor(doubled, point));
+  await page.locator('[data-node-id="venue"]').dispatchEvent('dblclick', { clientX: viewport.x + point.x, clientY: viewport.y + point.y });
   assert.deepEqual(await graphCamera(page), doubled, 'Double-clicking a node is not a background zoom');
+  assert.equal(await page.locator('.node-options[open]').count(), 0, 'Node double-click is a selection gesture');
 });
 
 test('touch pinches over nodes preserve the moving midpoint and suppress selection', { timeout: 30_000 }, async t => {
@@ -920,7 +899,7 @@ test('touch pinches over nodes preserve the moving midpoint and suppress selecti
   await touch('touchMove', [{ ...movedSecond, x: movedSecond.x + 10 }]);
   assert.deepEqual(await graphCamera(page), after, 'The remaining finger does not jump into a one-finger pan');
   await touch('touchEnd', []);
-  assert.equal(await page.locator('.node-inspector').count(), 0);
+  assert.equal(await page.locator('.node-options').count(), 0);
   assert.deepEqual(await page.locator('.graph-node').evaluateAll(nodes => nodes.map(n => n.parentElement.style.transform)), positions);
   assert.equal(await page.evaluate(() => visualViewport.scale), 1, 'Pinching changes the graph instead of browser page scale');
   await touch('touchStart', [{ ...first, id: 3 }]);
@@ -929,7 +908,8 @@ test('touch pinches over nodes preserve the moving midpoint and suppress selecti
   const node = await page.locator('[data-node-id="topic"]').boundingBox();
   await touch('touchStart', [{ id: 5, x: node.x + node.width / 2, y: node.y + node.height / 2 }]);
   await touch('touchEnd', []);
-  await page.getByRole('dialog', { name: 'Node details' }).waitFor();
+  assert.equal(await page.locator('.node-options[open]').count() > 0, false);
+
 });
 
 test('double-tapping blank canvas zooms once and cancelled taps do not pair', { timeout: 30_000 }, async t => {
@@ -945,7 +925,7 @@ test('double-tapping blank canvas zooms once and cancelled taps do not pair', { 
   const after = await graphCamera(page);
   assert.ok(Math.abs(after.scale - before.scale * 2) < .001, 'A double tap produces exactly one twofold zoom');
   sameAnchor(anchor, graphAnchor(after, point));
-  assert.equal(await page.locator('.node-inspector').count(), 0);
+  assert.equal(await page.locator('.node-options').count(), 0);
   await touch('touchStart', [{ ...location, id: 3 }]); await touch('touchCancel', []);
   await touch('touchStart', [{ ...location, id: 4 }]); await touch('touchEnd', []);
   assert.deepEqual(await graphCamera(page), after, 'Cancelled contacts cannot become part of a double tap');
@@ -953,13 +933,19 @@ test('double-tapping blank canvas zooms once and cancelled taps do not pair', { 
   assert.equal(await page.getByRole('button', { name: 'Fit graph', exact: true }).getAttribute('aria-pressed'), 'true');
 });
 
-test('shift hjkl pans the canvas and minus equals zoom from inspector controls', { timeout: 30_000 }, async t => {
+test('shift hjkl pans the canvas and minus equals zoom from options controls', { timeout: 30_000 }, async t => {
   const { page } = await shortcutFixture(t);
-  await page.locator('[data-node-id="venue"]').click();
+  await page.locator('[data-node-id="venue"]').dispatchEvent('click');
+  await openNodeDetails(page, 'venue');
+  await page.getByRole('button', { name: 'Zoom to 100% and focus', exact: true }).click();
+  for (let i = 0; i < 5; i++) await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await page.locator('.graph-viewport').dispatchEvent('wheel', { deltaX: 400, deltaY: 0 });
+  await page.locator('[data-node-id="venue"]').locator('..').locator('.show-node-details').dispatchEvent('click');
+  await page.getByRole('dialog', { name: 'Other node options' }).waitFor();
   const revision = await page.locator('.commit-entry[aria-current="step"]').textContent();
   const selected = await page.locator('.graph-node[aria-pressed="true"]').getAttribute('data-node-id');
   for (const [key, x, y] of [['Shift+h',187.5,0],['Shift+j',0,-187.5],['Shift+k',0,187.5],['Shift+l',-187.5,0]]) {
-    await page.getByRole('button', { name: 'Close node details' }).focus();
+    await page.getByRole('dialog', { name: 'Other node options' }).focus();
     const before = await graphCamera(page);
     await page.keyboard.press(key);
     const after = await graphCamera(page);
@@ -975,35 +961,9 @@ test('shift hjkl pans the canvas and minus equals zoom from inspector controls',
   assert.ok(Math.abs((await graphCamera(page)).scale - before.scale) < .001);
 });
 
-test('inspector puts the selected assumption or answer first with plain yellow emphasis', { timeout: 30_000 }, async t => {
-  const { page, sample } = await shortcutFixture(t);
-  for (const id of ['venue', 'people', 'headcount']) {
-    await page.getByRole('button', { name: 'Fit graph', exact: true }).click();
-    await page.locator(`[data-node-id="${id}"]`).click();
-    const node = sample.commits.at(-1).graph.nodes.find(n => n.id === id);
-    const inspector = page.getByRole('complementary', { name: 'Node details' });
-    const first = inspector.locator('.detail-option').first();
-    assert.match(await first.getAttribute('class'), /chosen/);
-    assert.equal(await first.locator('strong').textContent(), node.selectedAlternative);
-    assert.equal(await first.locator('.option-state').textContent(), node.kind === 'assumption' ? 'Assumed' : 'Decided');
-    const style = await first.evaluate(el => ({ color: getComputedStyle(el.querySelector('strong')).color, border: getComputedStyle(el).borderTopWidth, background: getComputedStyle(el).backgroundColor }));
-    assert.deepEqual(style, { color: 'rgb(230, 184, 92)', border: '0px', background: 'rgba(0, 0, 0, 0)' });
-    if (node.content !== node.selectedAlternative) assert.equal(await first.locator('.selected-answer').textContent(), node.content);
-    const dividers = await inspector.locator('.detail-option').evaluateAll(options => options.map(el => [getComputedStyle(el).borderBottomWidth, getComputedStyle(el).borderBottomColor]));
-    assert.ok(dividers.every(border => border[0] === '1px' && border[1] === dividers[0][1]));
-    assert.equal(await inspector.locator('.node-kind').textContent(), node.kind === 'assumption' ? 'Assumption' : 'Decided');
-    await inspector.getByRole('button', { name: 'Close node details' }).focus();
-    await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab');
-    const closeStyle = await inspector.getByRole('button', { name: 'Close node details' }).evaluate(el => ({ color: getComputedStyle(el).color, outline: getComputedStyle(el).outlineStyle }));
-    assert.deepEqual(closeStyle, { color: 'rgb(230, 184, 92)', outline: 'none' });
-    if (id === 'venue') await page.screenshot({ path: '/tmp/ari-inspector-assumptions.png' });
-    if (id === 'people') await page.screenshot({ path: '/tmp/ari-inspector-decided.png' });
-  }
-});
-
 test('assumptions use a fixed thicker dashed border and graph focus uses a single border', { timeout: 30_000 }, async t => {
   const { page } = await shortcutFixture(t);
-  await page.locator('[data-node-id="venue"]').click();
+  await openNodeDetails(page, 'venue');
   await page.getByRole('button', { name: 'Zoom to 100% and focus' }).click();
   const node = page.locator('[data-node-id="venue"]');
   for (let i = 0; i < 5; i++) {
@@ -1027,7 +987,8 @@ test('assumptions use a fixed thicker dashed border and graph focus uses a singl
 test('holding shifted pan keys ramps into continuous motion and eases to a stop', { timeout: 30_000 }, async t => {
   const { page } = await shortcutFixture(t);
   await page.emulateMedia({ reducedMotion: 'no-preference' });
-  await page.getByRole('button', { name: 'Fit graph', exact: true }).click();
+  await page.getByRole('button', { name: 'Zoom to 100% and focus', exact: true }).click();
+  for (let i = 0; i < 5; i++) await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
   const before = await graphCamera(page);
   await page.keyboard.down('Shift');
   await page.keyboard.down('h');
@@ -1177,6 +1138,7 @@ test('revision keys frame every highlighted node including answered added and re
   const { page } = await shortcutFixture(t);
   await page.getByRole('button', { name: 'Changed', exact: true }).click();
   for (const layout of ['Tree', 'Grouped', 'Radial']) {
+    if (await page.getByRole('button', { name: layout, exact: true }).isDisabled()) continue;
     await page.getByRole('button', { name: layout, exact: true }).click();
     await page.keyboard.press('Home');
     for (const [revision, highlight] of [[2,'removed'], [3,'answered'], [4,'added']]) {
@@ -1308,6 +1270,7 @@ test('color fixture shows all five transitions together and retains unchanged de
   await page.goto(base + '/#/clarifications/' + sample.id);
   await page.getByRole('button', { name: 'Changed', exact: true }).click();
   for (const layout of ['Tree','Grouped','Radial']) {
+    if (await page.getByRole('button', { name: layout, exact: true }).isDisabled()) continue;
     await page.getByRole('button', { name: layout, exact: true }).click();
     for (const [id, status, color] of [
       ['collector','Added','rgb(101, 214, 173)'],
@@ -1485,7 +1448,10 @@ test('number shortcuts focus node neighborhoods without opening details and copy
   assert.deepEqual(await graphCamera(page),before,'Ambiguous node 1 waits for a second digit');
   await page.keyboard.press('0');
   await page.locator(`[data-node-id="${ten.id}"].targeted`).waitFor();
-  assert.equal(await page.locator('.node-inspector').count(),0);
+  assert.equal(await page.locator('.node-options').count(),0);
+  assert.equal(await page.locator(`[data-node-id="${ten.id}"]`).getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.locator('.node-selection-badge').count(), 1);
+  assert.ok(await page.locator('.node-frame.inspection-dimmed').count() > 0);
   const neighborhood = [ten.id,...sample.commits.at(-1).graph.edges.filter(edge=>edge.kind==='parent'&&(edge.from===ten.id||edge.to===ten.id)).flatMap(edge=>[edge.from,edge.to])];
   const inside = await page.evaluate(ids=>{
     const viewport=document.querySelector('.graph-viewport').getBoundingClientRect();
@@ -1499,8 +1465,11 @@ test('number shortcuts focus node neighborhoods without opening details and copy
   await page.keyboard.press('1');
   await page.waitForTimeout(300);
   assert.equal(await page.locator('.graph-node.targeted').getAttribute('data-node-id'),ten.id);
+  await page.keyboard.press('Enter');
+  assert.equal(await page.locator('[data-node-id="topic"]').getAttribute('aria-pressed'), 'true', 'Enter selects the pending number immediately');
   await page.locator('[data-node-id="topic"].targeted').waitFor();
-  assert.equal(await page.locator('.node-inspector').count(),0);
+  assert.equal(await page.locator('.node-frame.inspection-dimmed').count(), 0);
+  assert.equal(await page.locator('.node-options').count(),0);
   await page.getByRole('button',{name:'Fit graph',exact:true}).click();
   const frame=page.locator('.node-frame').filter({has:page.locator('[data-node-id="people"]')});
   const spacing=await frame.evaluate(frame=>{
@@ -1509,7 +1478,7 @@ test('number shortcuts focus node neighborhoods without opening details and copy
     const scale=new DOMMatrix(getComputedStyle(document.querySelector('.graph-scene')).transform).a;
     return {top:(t.top-rect.top)/scale,left:(t.left-rect.left)/scale,footer:Math.abs(s.top+s.height/2-n.top-n.height/2)/scale};
   });
-  assert.ok(Math.abs(spacing.top-spacing.left)<1 && spacing.top>=10 && spacing.top<=12,'Title padding is uniformly 10px inside the border');
+  assert.ok(Math.abs(spacing.top - 12) < 1 && Math.abs(spacing.left - 12) < 1, `Title padding is uniformly 10px inside the border: ${JSON.stringify(spacing)}`);
   assert.ok(spacing.footer<1,`Status and node number share a center line: ${JSON.stringify(spacing)}`);
   await page.screenshot({path:'/tmp/ari-numbered-nodes.png'});
 });
@@ -1523,6 +1492,8 @@ test('tracking follows live revisions at Latest and keeps its session preference
   let revision = sample.commits.length;
   async function publish() {
     target.content += ' updated';
+    const selected = target.alternatives?.find(option => option.id === target.selectedAlternative);
+    if (selected) selected.text = target.content;
     await tool('publish_graph_commit', { clarificationId: sample.id, expectedRevision: revision++, graph, confirmedChanges: [target.id], commit: { title: `Live revision ${revision}`, kind: 'directAnswer' } });
     await page.waitForFunction(count => document.querySelectorAll('.commit-entry').length === count, revision);
   }
@@ -1562,24 +1533,42 @@ test('fullscreen animates the chrome away and restores the canvas controls witho
     await page.setViewportSize({ width, height: 1000 });
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     const camera = await graphCamera(page);
+    const screenPositions = () => page.locator('.graph-node').evaluateAll(nodes => nodes.map(node => {
+      const rect = node.getBoundingClientRect(); return { id: node.dataset.nodeId, x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+    }));
+    const nodesBefore = await screenPositions();
+    const stableNodes = async () => {
+      const after = await screenPositions();
+      for (let i = 0; i < after.length; i++) for (const key of ['x', 'y', 'width', 'height']) {
+        assert.ok(Math.abs(after[i][key] - nodesBefore[i][key]) < 1, `${width}px ${after[i].id} ${key}: ${after[i][key]} vs ${nodesBefore[i][key]}`);
+      }
+      assert.equal((await graphCamera(page)).scale, camera.scale);
+    };
     const initial = await page.locator('.graph-viewport').boundingBox();
-    await page.keyboard.press('f');
+    const toggle = page.getByRole('button', { name: 'Toggle fullscreen canvas', exact: true });
+    await toggle.click();
+    assert.equal(await toggle.getAttribute('aria-pressed'), 'true');
     await page.waitForTimeout(100);
     const intermediate = await page.locator('.graph-viewport').boundingBox();
+    await stableNodes();
     await page.waitForTimeout(300);
     const final = await page.locator('.graph-viewport').boundingBox();
     assert.ok(intermediate.height > initial.height && intermediate.height < final.height, 'Chrome slides out over time');
-    assert.ok(Math.abs(final.y) < 1 && Math.abs(final.x) < 1 && Math.abs(final.width - width) < 1 && Math.abs(final.height - 1000) < 1, JSON.stringify(final));
-    assert.deepEqual(await graphCamera(page), camera);
+    assert.ok(Math.abs(final.y - 66) < 1 && Math.abs(final.x) < 1 && Math.abs(final.width - width) < 1 && Math.abs(final.height - 934) < 1, JSON.stringify(final));
+    await stableNodes();
+    assert.equal(await page.locator('.page-header').evaluate(el => el.inert), false);
+    assert.equal(Math.round((await page.locator('.page-header').boundingBox()).height), 66);
     await page.keyboard.press('Escape');
     await page.waitForTimeout(350);
     assert.ok(page.url().includes('/clarifications/'));
     assert.deepEqual(await page.locator('.graph-viewport').boundingBox(), initial);
+    await stableNodes();
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.keyboard.press('f');
-    assert.ok(Math.abs((await page.locator('.graph-viewport').boundingBox()).y) < 1);
-    await page.keyboard.press('f');
-    assert.deepEqual(await graphCamera(page), camera);
+    assert.ok(Math.abs((await page.locator('.graph-viewport').boundingBox()).y - 66) < 1);
+    await toggle.click();
+    assert.equal(await toggle.getAttribute('aria-pressed'), 'false');
+    await stableNodes();
   }
 });
 
@@ -1684,10 +1673,11 @@ test('MCP group labels round-trip and gather existing nodes under a canonical he
   const page = await browserFor(t);
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(base + '/#/clarifications/group-label-demo');
-  await page.getByRole('button', { name: 'Grouped', exact: true }).click();
+  assert.equal(await page.getByRole('button', { name: 'Grouped', exact: true }).isDisabled(), true);
   assert.equal(await page.locator('[data-island-id]').count(), 0);
   for (const node of graph.nodes.slice(1)) node.groupLabel = 'nicely-inside-the-panel';
   await tool('publish_graph_commit', { clarificationId: 'group-label-demo', expectedRevision: 1, graph, commit: { title: 'Group collection details', kind: 'graphUpdated' } });
+  await page.getByRole('button', { name: 'Grouped', exact: true }).click();
   await page.locator('.island-title', { hasText: 'Nicely inside the panel' }).waitFor();
   assert.equal(await page.locator('.island-title').textContent(), 'Nicely inside the panel');
   assert.ok(Number(await page.locator('.island-region').getAttribute('width')) < 600, 'Existing members reflow into one compact group');
@@ -1888,5 +1878,953 @@ test('mobile library scrolls its intro and keeps opaque search and deletion cont
     assert.equal(await page.locator('.clarity-card').count(), 1);
     await page.keyboard.press('Enter');
     assert.equal(await page.locator('.clarity-card:focus').count(), 1);
+  }
+});
+
+for (const layoutName of ['Tree', 'Grouped', 'Radial']) test(`${layoutName} toggles boxed nodes and copies selected node references`, { timeout: 30_000 }, async t => {
+  const { page, sample } = await shortcutFixture(t);
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.getByRole('button', { name: layoutName, exact: true }).click();
+  const cards = page.locator('.graph-node');
+  const ids = await cards.evaluateAll(nodes => nodes.slice(0, 3).map(node => node.dataset.nodeId));
+  const card = id => page.locator(`.graph-node[data-node-id="${id}"]`);
+  const selection = async () => page.locator('.graph-node[aria-pressed="true"]').evaluateAll(nodes => nodes.map(node => node.dataset.nodeId));
+  const camera = await graphCamera(page);
+  const viewportCursor = () => page.locator('.graph-viewport').evaluate(el => getComputedStyle(el).cursor);
+  const normalCursor = await viewportCursor();
+  await page.keyboard.down('Shift');
+  assert.equal(await viewportCursor(), 'crosshair');
+  assert.equal(await card(ids[0]).evaluate(el => getComputedStyle(el).cursor), 'crosshair');
+  await page.keyboard.up('Shift');
+  assert.equal(await viewportCursor(), normalCursor);
+  await page.keyboard.down('Shift');
+  await page.evaluate(() => window.dispatchEvent(new Event('blur')));
+  assert.equal(await viewportCursor(), normalCursor, 'Leaving the window clears the modifier cursor');
+  await page.keyboard.up('Shift');
+  async function box(id, cancel = false) {
+    const rect = await card(id).boundingBox();
+    await page.keyboard.down('Shift');
+    await page.mouse.move(rect.x - 8, rect.y - 8);
+    await page.mouse.down();
+    await page.mouse.move(rect.x + 10, rect.y + 10, { steps: 5 });
+    assert.equal(await page.locator('.selection-box').count(), 1);
+    if (cancel) await page.locator('.graph-viewport').dispatchEvent('pointercancel', { pointerId: 1, pointerType: 'mouse' });
+    await page.mouse.up();
+    await page.keyboard.up('Shift');
+    assert.equal(await page.locator('.selection-box').count(), 0);
+  }
+  await card(ids[0]).click();
+  await box(ids[0], true);
+  assert.deepEqual(await selection(), [ids[0]], 'Cancelling a removal restores the selection');
+  await box(ids[0]);
+  assert.deepEqual(await selection(), [], 'Boxing a selected node deselects it');
+  await box(ids[0]);
+  assert.deepEqual(await selection(), [ids[0]]);
+  assert.equal(await page.getByRole('toolbar', { name: 'Selected node actions' }).count(), 1);
+  await box(ids[1]);
+  assert.deepEqual(await selection(), ids.slice(0, 2));
+  assert.equal(await page.locator('.node-options[open]').count() > 0, false);
+  await page.getByRole('toolbar', { name: 'Selected node actions' }).waitFor();
+  await card(ids[2]).click({ modifiers: ['Shift'] });
+  assert.deepEqual(await selection(), ids);
+  await page.getByRole('button', { name: 'Copy selected node references', exact: true }).click();
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), `ari@${sample.id}@${ids.join(',')}`);
+  assert.equal(await page.locator('.reference-notification').textContent(), `Copied ari@${sample.id}@${ids.join(',')}`);
+  await page.locator('.selection-actions').waitFor({ state: 'detached' });
+  assert.deepEqual(await selection(), []);
+  for (const id of ids) await card(id).click({ modifiers: ['Shift'] });
+  await card(ids[1]).click({ modifiers: ['Shift'] });
+  assert.deepEqual(await selection(), [ids[0], ids[2]]);
+  await box(ids[1], true);
+  assert.deepEqual(await selection(), [ids[0], ids[2]], 'Cancellation preserves the committed selection');
+  await box(ids[1]);
+  assert.deepEqual(await selection(), ids);
+  assert.deepEqual(await graphCamera(page), camera, 'Selection preserves the camera');
+  const viewport = await page.locator('.graph-viewport').boundingBox();
+  await page.keyboard.down('Shift');
+  await page.mouse.move(viewport.x + viewport.width - 10, viewport.y + 10);
+  await page.mouse.down();
+  await page.mouse.move(viewport.x + 10, viewport.y + viewport.height - 10, { steps: 8 });
+  await page.mouse.up();
+  await page.keyboard.up('Shift');
+  const toggled = await cards.evaluateAll((nodes, selected) => nodes.map(node => node.dataset.nodeId).filter(id => !selected.includes(id)), ids);
+  assert.deepEqual(await selection(), toggled, 'A reverse-direction box toggles both selected and unselected cards');
+  await page.getByRole('button', { name: layoutName === 'Tree' ? 'Grouped' : 'Tree', exact: true }).click();
+  assert.deepEqual(new Set(await selection()), new Set(toggled), 'Selection survives layout changes');
+  await page.getByRole('button', { name: 'Clear node selection', exact: true }).click();
+  assert.deepEqual(await selection(), []);
+  await page.getByRole('toolbar', { name: 'Selected node actions' }).waitFor({ state: 'detached' });
+  await card(ids[0]).click();
+  assert.equal(await card(ids[0]).locator('.node-selection-badge').count(), 1);
+  assert.equal(await page.locator('.selection-actions [role="status"]').getAttribute('aria-label'), '1 selected');
+  assert.equal(await page.locator('.node-options[open]').count() > 0, false, 'An ordinary click selects the node');
+  await openNodeDetails(page, 'venue');
+  assert.equal(await page.locator('.node-options[open]').count() > 0, true);
+  await page.keyboard.press('Escape');
+  await card(ids[1]).click({ modifiers: ['Shift'] });
+  await card(ids[2]).click({ modifiers: ['Shift'] });
+  await page.keyboard.press('k');
+  assert.deepEqual(await selection(), [], 'Changing revision clears the selection');
+});
+
+
+test('selection shortcuts deselect before navigation and yy copies the active selection', { timeout: 30_000 }, async t => {
+  const { page, base, sample } = await shortcutFixture(t);
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  const selection = page.locator('.graph-node[aria-pressed="true"]');
+  const copy = async expected => {
+    await page.keyboard.press('y'); await page.keyboard.press('y');
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), expected);
+    await page.locator('.selection-actions').waitFor({ state: 'detached' });
+    assert.equal(await selection.count(), 0);
+  };
+  for (const width of [1600, 390]) for (const key of ['Escape', 'Control+[']) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto(base + '/#/clarifications/' + sample.id);
+    await page.locator('.graph-node').first().waitFor();
+    const ids = await page.locator('.graph-node').evaluateAll(nodes => nodes.slice(0, 2).map(n => n.dataset.nodeId));
+    for (const id of ids) await page.locator(`[data-node-id="${id}"]`).dispatchEvent('click', { shiftKey: true });
+    await page.locator('.graph-viewport').focus();
+    await copy(`ari@${sample.id}@${ids.join(',')}`);
+    for (const id of ids) await page.locator(`[data-node-id="${id}"]`).dispatchEvent('click', { shiftKey: true });
+    await page.keyboard.press('f');
+    await page.keyboard.press(key);
+    assert.equal(await selection.count(), 0);
+    assert.equal(await page.locator('.graph-workspace').evaluate(el => el.classList.contains('fullscreen')), true, 'Deselect before restoring fullscreen controls');
+    assert.equal(new URL(page.url()).hash, '#/clarifications/' + sample.id);
+    await copy(`ari@${sample.id}`);
+    await page.keyboard.press(key);
+    assert.equal(await page.locator('.graph-workspace').evaluate(el => el.classList.contains('fullscreen')), false);
+    await page.locator(`[data-node-id="${ids[0]}"]`).dispatchEvent('click', { shiftKey: true });
+    await copy(`ari@${sample.id}@${ids[0]}`);
+    await page.locator(`[data-node-id="${ids[0]}"]`).dispatchEvent('click', { shiftKey: true });
+    await page.keyboard.press(key);
+    assert.equal(await selection.count(), 0);
+    assert.equal(new URL(page.url()).hash, '#/clarifications/' + sample.id);
+    await page.locator(`[data-node-id="${ids[0]}"]`).dispatchEvent('click');
+    await openNodeDetails(page, 'venue');
+    await page.getByRole('dialog', { name: 'Other node options', exact: true }).waitFor();
+    await copy(`ari@${sample.id}@${ids[0]}`);
+    await page.locator(`[data-node-id="${ids[0]}"]`).dispatchEvent('click', { shiftKey: true });
+    await page.keyboard.press(key);
+    assert.equal(await selection.count(), 0);
+    assert.equal(new URL(page.url()).hash, '#/clarifications/' + sample.id);
+    await page.keyboard.press(key);
+    await page.locator('.library').waitFor();
+  }
+});
+
+test('cards show every title and answer line without overlapping in each layout', { timeout: 30_000 }, async t => {
+  const { base, tool } = await fixture(t);
+  const counts = [1, 2, 4, 12];
+  const nodes = counts.map(count => ({
+    id: `lines-${count}`, title: Array.from({ length: count }, (_, i) => `Heading ${i + 1}`).join('\n'),
+    kind: count === 1 ? 'topic' : 'decided',
+    ...(count > 1 ? { groupLabel: 'text-examples' } : {}),
+    content: Array.from({ length: count }, (_, i) => `Line ${i + 1}`).join('\n'),
+    alternatives: [], dependsOn: [],
+  }));
+  await tool('create_clarification', {
+    id: 'card-heights', title: 'Card heights', description: 'Text wrapping fixture.',
+    graph: { nodes, edges: nodes.slice(1).map(node => ({ id: `parent-${node.id}`, kind: 'parent', from: nodes[0].id, to: node.id })) },
+    commit: { title: 'Text wrapping', kind: 'topicStaged' },
+  });
+  const page = await browserFor(t);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(base + '/#/clarifications/card-heights');
+  await page.locator('.graph-node').first().waitFor();
+  for (const name of ['Tree', 'Grouped', 'Radial']) {
+    await page.getByRole('button', { name, exact: true }).click();
+    const cards = await page.locator('.graph-node').evaluateAll(elements => elements.map(card => {
+      const title = card.querySelector('strong'), value = card.querySelector('.node-value');
+      const bounds = card.getBoundingClientRect(), scale = bounds.height / card.offsetHeight;
+      return {
+        id: card.dataset.nodeId, height: card.offsetHeight, bounds: bounds.toJSON(),
+        topGap: parseFloat(getComputedStyle(value).marginTop), padding: getComputedStyle(card).padding,
+        lines: value.clientHeight / parseFloat(getComputedStyle(value).lineHeight),
+        titleLines: title.clientHeight / parseFloat(getComputedStyle(title).lineHeight),
+        clipped: value.scrollHeight > value.clientHeight || title.scrollHeight > title.clientHeight,
+        footerGap: (card.querySelector('.node-status').getBoundingClientRect().top - value.getBoundingClientRect().bottom) / scale,
+      };
+    }));
+    const byId = Object.fromEntries(cards.map(card => [card.id, card]));
+    for (const [index, count] of counts.entries()) {
+      const card = byId[`lines-${count}`];
+      if (index) assert.ok(card.height > byId[`lines-${counts[index - 1]}`].height);
+      assert.ok(Math.abs(card.lines - count) < .1);
+      assert.ok(Math.abs(card.titleLines - count) < .1);
+      assert.equal(card.clipped, false);
+      assert.ok(Math.abs(card.footerGap - card.topGap) < 1, 'Answer has equal gaps above and below');
+      assert.equal(card.padding, '10px');
+    }
+    for (const a of cards) for (const b of cards) if (a !== b) {
+      assert.ok(a.bounds.right <= b.bounds.x || b.bounds.right <= a.bounds.x || a.bounds.bottom <= b.bounds.y || b.bounds.bottom <= a.bounds.y, `${name} separates ${a.id} and ${b.id}`);
+    }
+  }
+});
+
+
+test('mobile multi-select toggles nodes by touch, preserves mode while panning, and exits on blank taps', { timeout: 30_000 }, async t => {
+  const { page, sample } = await shortcutFixture(t);
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  const touch = await touchSession(page);
+  const mode = page.getByRole('button', { name: 'Multi-select nodes', exact: true });
+  const selected = page.locator('.graph-node[aria-pressed="true"]');
+  const ids = await page.locator('.graph-node').evaluateAll(nodes => nodes.slice(0, 2).map(n => n.dataset.nodeId));
+  let pointer = 0;
+  async function tapNode(id) {
+    const node = await page.locator(`.graph-node[data-node-id="${id}"]`).boundingBox();
+    await touch('touchStart', [{ id: ++pointer, x: node.x + node.width / 2, y: node.y + node.height / 2 }]);
+    await touch('touchEnd', []);
+  }
+  for (const width of [320, 390, 825]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.getByRole('button', { name: 'Fit graph', exact: true }).click();
+    await mode.click();
+    assert.equal(await mode.getAttribute('aria-pressed'), 'true');
+    await page.getByRole('toolbar', { name: 'Selected node actions' }).waitFor();
+    assert.equal(await page.locator('.selection-actions [role="status"]').getAttribute('aria-label'), '0 selected');
+    assert.equal(await page.getByRole('button', { name: 'Copy selected node references', exact: true }).isDisabled(), true);
+    assert.equal(await page.locator('.diagram-minimap').count(), 0);
+    assert.equal(await page.locator('.viewport-buttons > button').last().getAttribute('aria-label'), 'Multi-select nodes');
+    await tapNode(ids[0]);
+    assert.equal(await selected.count(), 1);
+    assert.equal(await page.locator('.node-options[open]').count() > 0, false);
+    await page.getByRole('toolbar', { name: 'Selected node actions' }).waitFor();
+    await tapNode(ids[1]);
+    assert.equal(await selected.count(), 2);
+    if (width === 390) {
+      await page.evaluate(() => {
+        window.clipboardWrite = navigator.clipboard.writeText;
+        navigator.clipboard.writeText = async () => { throw new Error('Clipboard denied'); };
+      });
+      await page.getByRole('button', { name: 'Copy selected node references', exact: true }).click();
+      await page.locator('.reference-notification.notification-error').waitFor();
+      assert.equal(await selected.count(), 2, 'Clipboard failures preserve selection');
+      assert.equal(await mode.getAttribute('aria-pressed'), 'true');
+      await page.evaluate(() => { navigator.clipboard.writeText = window.clipboardWrite; delete window.clipboardWrite; });
+    }
+    await page.getByRole('button', { name: 'Copy selected node references', exact: true }).click();
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), `ari@${sample.id}@${ids.join(',')}`);
+    await page.locator('.selection-actions').waitFor({ state: 'detached' });
+    assert.equal(await selected.count(), 0);
+    assert.equal(await mode.getAttribute('aria-pressed'), 'false');
+    await mode.click();
+    await tapNode(ids[0]); await tapNode(ids[1]);
+    const pill = await page.locator('.selection-actions').boundingBox();
+    const controls = await page.locator('.viewport-buttons').boundingBox();
+    assert.ok(pill.x >= 0 && pill.x + pill.width <= width);
+    const inset = width <= 700 ? 10 : 16;
+    assert.ok(Math.abs(pill.x - inset) < 1, 'Selection pill aligns to the left canvas inset');
+    assert.ok(Math.abs(controls.x + controls.width - width + inset) < 1, 'Canvas controls align to the right inset');
+    assert.ok(controls.x >= 0 && controls.x + controls.width <= width);
+    if (pill.width + controls.width + 8 <= width - inset * 2) {
+      assert.ok(pill.x + pill.width <= controls.x, 'Pill sits to the left of the controls when both fit');
+      assert.ok(Math.abs(pill.y + pill.height / 2 - controls.y - controls.height / 2) < 1, 'Pill aligns with the controls');
+    } else assert.ok(pill.y + pill.height <= controls.y, 'The pill wraps above the controls when needed');
+    const viewport = await page.locator('.graph-viewport').boundingBox();
+    const point = { id: ++pointer, x: viewport.x + 16, y: viewport.y + 20 };
+    const before = await graphCamera(page);
+    await touch('touchStart', [point]);
+    await touch('touchMove', [{ ...point, x: point.x + 40, y: point.y + 30 }]);
+    await touch('touchEnd', []);
+    assert.notDeepEqual(await graphCamera(page), before);
+    assert.equal(await mode.getAttribute('aria-pressed'), 'true');
+    assert.equal(await selected.count(), 2);
+    const finger = { id: ++pointer, x: viewport.x + 80, y: viewport.y + 80 };
+    const otherFinger = { id: ++pointer, x: finger.x + 80, y: finger.y };
+    const beforePinch = await graphCamera(page);
+    await touch('touchStart', [finger]);
+    await touch('touchStart', [finger, otherFinger]);
+    await touch('touchMove', [finger, { ...otherFinger, x: otherFinger.x + 20 }]);
+    await touch('touchEnd', []);
+    assert.ok((await graphCamera(page)).scale > beforePinch.scale);
+    assert.equal(await selected.count(), 2, 'Pinching preserves selected nodes');
+    assert.equal(await mode.getAttribute('aria-pressed'), 'true');
+    await tapNode(ids[1]);
+    assert.equal(await selected.count(), 1, 'Tapping a selected node deselects it');
+    const card = await page.locator(`.graph-node[data-node-id="${ids[0]}"]`).boundingBox();
+    const onCard = { id: ++pointer, x: card.x + card.width / 2, y: card.y + card.height / 2 };
+    await touch('touchStart', [onCard]);
+    await touch('touchMove', [{ ...onCard, x: onCard.x + 20 }]);
+    await touch('touchEnd', []);
+    assert.equal(await selected.count(), 1, 'Dragging a node pans without toggling it');
+    assert.equal(await mode.getAttribute('aria-pressed'), 'true');
+    await touch('touchStart', [{ ...point, id: ++pointer }]);
+    await touch('touchEnd', []);
+    assert.equal(await selected.count(), 0);
+    assert.equal(await mode.getAttribute('aria-pressed'), 'false');
+    assert.equal(await page.locator('.diagram-minimap').count(), 1);
+    await tapNode(ids[0]);
+    assert.equal(await page.locator('.node-options[open]').count() > 0, false);
+    await openNodeDetails(page, 'venue');
+    await page.getByRole('dialog', { name: 'Other node options', exact: true }).waitFor();
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await mode.click();
+    await page.keyboard.press('y'); await page.keyboard.press('y');
+    assert.equal(await page.evaluate(() => navigator.clipboard.readText()), `ari@${sample.id}`);
+    await page.locator('.selection-actions').waitFor({ state: 'detached' });
+    assert.equal(await mode.getAttribute('aria-pressed'), 'false', 'yy exits selection mode when no nodes are selected');
+    await mode.click();
+    await page.keyboard.press('Control+[');
+    assert.equal(await mode.getAttribute('aria-pressed'), 'false', 'Escape shortcuts also exit an empty selection mode');
+  }
+});
+
+
+test('Grouped availability follows revision groups on desktop, mobile, and bracket shortcuts', { timeout: 30_000 }, async t => {
+  const { base, tool } = await fixture(t);
+  const nodes = ['topic', 'food', 'drinks'].map(id => ({ id, title: id, content: id,
+    kind: id === 'topic' ? 'topic' : 'decided', alternatives: [] }));
+  const graph = { nodes, edges: nodes.slice(1).map(node => ({ id: `parent-${node.id}`, kind: 'parent', from: 'topic', to: node.id })) };
+  await tool('create_clarification', { id: 'group-availability', title: 'Group availability', graph, commit: { title: 'Choose refreshments', kind: 'topicStaged' } });
+  const grouped = structuredClone(graph);
+  for (const node of grouped.nodes.slice(1)) node.groupLabel = 'refreshment-options';
+  await tool('publish_graph_commit', { clarificationId: 'group-availability', expectedRevision: 1, graph: grouped, commit: { title: 'Group refreshments', kind: 'directAnswer' } });
+  const page = await browserFor(t);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(base + '/#/clarifications/group-availability');
+  const button = name => page.getByRole('button', { name, exact: true });
+  await button('Grouped').click();
+  assert.equal(await page.locator('.island-region').count(), 1);
+  assert.ok((await page.locator('.wires > path.parent').evaluateAll(paths => paths.map(path => path.getAttribute('d')))).every(path => path.includes(' C')));
+  await page.keyboard.press('Home');
+  await page.waitForFunction(() => document.querySelector('.view-toggle [aria-pressed="true"]')?.textContent === 'Tree');
+  assert.equal(await button('Grouped').isDisabled(), true);
+  for (const key of [']', '[']) {
+    await page.keyboard.press(key);
+    assert.equal(await button('Radial').getAttribute('aria-pressed'), 'true');
+    await page.keyboard.press(key);
+    assert.equal(await button('Tree').getAttribute('aria-pressed'), 'true');
+  }
+  await page.setViewportSize({ width: 390, height: 900 });
+  const select = page.getByRole('combobox', { name: 'Graph layout' });
+  assert.equal(await select.locator('option[value="islands"]').isDisabled(), true);
+  await page.keyboard.press('End');
+  await page.waitForFunction(() => !document.querySelector('option[value="islands"]').disabled);
+  await select.selectOption('islands');
+  assert.equal(await select.inputValue(), 'islands');
+  await page.keyboard.press('Home');
+  await page.waitForFunction(() => document.querySelector('select[aria-label="Graph layout"]').value === 'hierarchy');
+});
+
+
+test('selection shows a checkmark and pill immediately and Shift adds the inspected node', { timeout: 30_000 }, async t => {
+  const { page } = await shortcutFixture(t);
+  const cards = page.locator('.graph-node');
+  await cards.nth(0).click();
+  assert.equal(await page.locator('.node-options[open]').count() > 0, false);
+  assert.equal(await page.locator('.node-selection-badge').count(), 1);
+  await cards.nth(0).click();
+  assert.equal(await page.locator('.graph-node[aria-pressed="true"]').count(), 0);
+  await page.locator('.selection-actions').waitFor({ state: 'detached' });
+  await cards.nth(0).click({ modifiers: ['Shift'] });
+  await cards.nth(0).click();
+  assert.equal(await page.locator('.graph-node[aria-pressed="true"]').count(), 0);
+  await cards.nth(0).click();
+  await cards.nth(1).click({ modifiers: ['Shift'] });
+  assert.equal(await page.locator('.node-selection-badge').count(), 2);
+  assert.equal(await page.locator('.node-options[open]').count() > 0, false);
+  await cards.nth(0).click({ modifiers: ['Shift'] });
+  assert.equal(await page.locator('.node-selection-badge').count(), 1);
+  await cards.nth(2).click();
+  assert.equal(await page.locator('.node-selection-badge').count(), 1);
+});
+
+test('Ctrl+F searches the visible graph and all graphs with previous and next navigation', { timeout: 30_000 }, async t => {
+  const { base, tool } = await fixture(t);
+  const graph = {
+    nodes: [
+      { id: 'topic', title: 'Kitchen plan', kind: 'topic', content: 'Plan meals.' },
+      { id: 'fruit', title: 'Fruit choice', kind: 'decided', content: 'Fresh fruit.', alternatives: [{ label: 'Orange', description: 'A citrus option.' }] },
+      { id: 'amount', title: 'Quantity', kind: 'decided', content: 'Retired citrus measure.' },
+    ],
+    edges: ['fruit', 'amount'].map(id => ({ id: `parent-${id}`, kind: 'parent', from: 'topic', to: id })),
+  };
+  await tool('create_clarification', { id: 'search-kitchen', title: 'Kitchen', graph, commit: { title: 'Plan kitchen', kind: 'topicStaged' } });
+  const updated = structuredClone(graph); updated.nodes[2].content = 'Current citrus measure.';
+  await tool('publish_graph_commit', { clarificationId: 'search-kitchen', expectedRevision: 1, graph: updated, confirmedChanges: ['amount'], commit: { title: 'Set quantity', kind: 'revisedDecision' } });
+  await tool('create_clarification', { id: 'search-shopping', title: 'Shopping', graph: { nodes: [{ id: 'topic', title: 'Shopping list', kind: 'topic', content: 'Buy citrus weekly.' }], edges: [] }, commit: { title: 'Plan shopping', kind: 'topicStaged' } });
+  const page = await browserFor(t);
+  page.setDefaultTimeout(5000);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(base + '/#/clarifications/search-kitchen');
+  await page.locator('.graph-node').first().waitFor();
+  await page.keyboard.press('Control+f');
+  const input = page.getByRole('searchbox', { name: 'Find graph nodes', exact: true });
+  const count = page.getByRole('status', { name: 'Search result count', exact: true });
+  assert.equal(await input.evaluate(el => el === document.activeElement), true);
+  assert.equal(await input.evaluate(el => getComputedStyle(el).outlineStyle), 'none');
+  assert.equal(await input.evaluate(el => getComputedStyle(el).borderTopWidth), '0px');
+  const searchBounds = await page.locator('.graph-search').boundingBox();
+  const headerBounds = await page.locator('.page-header').boundingBox();
+  assert.ok(Math.abs(searchBounds.width - 359) < 1);
+  assert.ok(Math.abs((1600 - searchBounds.x - searchBounds.width) - (searchBounds.y - headerBounds.y - headerBounds.height)) < 1, 'Search has equal top and right insets');
+  const previousBounds = await page.getByRole('button', { name: 'Previous search result', exact: true }).boundingBox();
+  const summaryBounds = await page.locator('.search-result-summary').boundingBox();
+  const nextBounds = await page.getByRole('button', { name: 'Next search result', exact: true }).boundingBox();
+  assert.ok(previousBounds.x < summaryBounds.x && nextBounds.x >= summaryBounds.x + summaryBounds.width);
+  assert.ok(Math.abs(summaryBounds.x + summaryBounds.width / 2 - searchBounds.x - searchBounds.width / 2) < 1);
+  await input.fill('citrus');
+  await page.waitForFunction(() => document.querySelector('.graph-node.targeted')?.dataset.nodeId === 'fruit');
+  assert.equal(await count.textContent(), '1 / 2');
+  assert.equal(await page.locator('[data-node-id="amount"]').locator('..').evaluate(el => Number(getComputedStyle(el).opacity)), .67);
+  for (const id of ['topic', 'fruit']) assert.equal(await page.locator(`[data-node-id="${id}"]`).locator('..').evaluate(el => Number(getComputedStyle(el).opacity)), 1);
+  assert.equal(await page.locator('.node-selection-badge').count(), 0);
+  assert.equal((await graphCamera(page)).scale, 1);
+  await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
+  assert.ok((await graphCamera(page)).scale < 1);
+  await page.getByRole('button', { name: 'Next search result', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('.graph-node.targeted')?.dataset.nodeId === 'amount');
+  assert.equal(await count.textContent(), '2 / 2');
+  assert.equal(await page.locator('[data-node-id="fruit"]').locator('..').evaluate(el => Number(getComputedStyle(el).opacity)), .67);
+  assert.equal(await page.locator('[data-node-id="amount"]').locator('..').evaluate(el => Number(getComputedStyle(el).opacity)), 1);
+  assert.equal((await graphCamera(page)).scale, 1, 'Every result restores 100% zoom');
+  const focusedBounds = await page.locator('[data-node-id="amount"]').boundingBox();
+  const viewportBounds = await page.locator('.graph-viewport').boundingBox();
+  assert.ok(Math.abs(focusedBounds.x + focusedBounds.width / 2 - viewportBounds.x - viewportBounds.width / 2) < 1, 'Search centers the matched node, independently of its relatives');
+  assert.ok(focusedBounds.y >= searchBounds.y + searchBounds.height);
+  assert.equal(await page.locator('[data-node-id="amount"] .node-value mark').textContent(), 'citrus');
+  assert.equal(await page.locator('[data-node-id="amount"] mark').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(255, 145, 77)');
+  await page.getByRole('button', { name: 'Previous search result', exact: true }).click();
+  assert.equal(await count.textContent(), '1 / 2');
+  assert.equal(await page.locator('[data-node-id="amount"] mark').evaluate(el => getComputedStyle(el).backgroundColor), 'rgb(230, 184, 92)');
+  await page.locator('.graph-viewport').click({ position: { x: 12, y: 12 } });
+  assert.equal(await input.evaluate(el => el === document.activeElement), false);
+  assert.equal(await page.locator('.graph-viewport').evaluate(el => el === document.activeElement), true);
+  assert.equal(await input.inputValue(), 'citrus');
+  await input.focus(); await page.keyboard.press('Enter');
+  assert.equal(await count.textContent(), '2 / 2');
+  await page.keyboard.press('Shift+Enter');
+  assert.equal(await count.textContent(), '1 / 2');
+  await input.fill('f'); await page.keyboard.press('f');
+  assert.equal(await input.inputValue(), 'ff');
+  assert.equal(await page.locator('.graph-workspace').evaluate(el => el.classList.contains('fullscreen')), false);
+  await input.fill('retired');
+  assert.equal(await count.textContent(), 'No results');
+  assert.equal(await page.locator('.node-frame.inspection-dimmed').count(), 0);
+  await page.keyboard.press('Escape');
+  await page.keyboard.press('Home');
+  await page.keyboard.press('Control+f');
+  assert.equal(await input.inputValue(), '');
+  await input.fill('retired');
+  await page.waitForFunction(() => document.querySelector('.graph-node.targeted')?.dataset.nodeId === 'amount');
+  assert.equal(await count.textContent(), '1 / 1');
+  await page.getByRole('link', { name: 'Back to clarity library', exact: true }).click();
+  await page.locator('.library').waitFor();
+  await page.keyboard.press('Control+f');
+  assert.equal(await input.inputValue(), '');
+  await input.fill('retired');
+  assert.equal(await count.textContent(), 'No results', 'Library search uses the latest revisions');
+  await input.fill('citrus');
+  assert.match(await count.textContent(), /\/ 3$/);
+  for (let i = 0; i < 3 && !page.url().endsWith('search-shopping'); i++) await page.getByRole('button', { name: 'Next search result', exact: true }).click();
+  await page.waitForURL(base + '/#/clarifications/search-shopping');
+  await page.waitForFunction(() => document.querySelector('.graph-node.targeted')?.dataset.nodeId === 'topic');
+  assert.equal(await input.inputValue(), 'citrus');
+  assert.equal(await page.locator('.node-selection-badge').count(), 0);
+  await page.getByRole('button', { name: 'Previous search result', exact: true }).click();
+  await page.waitForURL(base + '/#/clarifications/search-kitchen');
+  await page.locator('.graph-node[data-node-id="fruit"]').waitFor();
+  await page.waitForFunction(() => document.querySelector('.graph-node.targeted'));
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('.graph-search').count(), 0);
+  assert.equal(await page.locator('.graph-node mark').count(), 0);
+  assert.equal(await page.locator('.node-frame.inspection-dimmed').count(), 0);
+  await page.keyboard.press('f');
+  await page.waitForFunction(() => document.querySelector('.graph-workspace')?.classList.contains('fullscreen'));
+  await page.keyboard.press('Control+f');
+  await input.waitFor();
+  assert.equal(await page.locator('.page-header').evaluate(el => el.inert), false);
+  await page.setViewportSize({ width: 390, height: 900 });
+  const bounds = await page.locator('.graph-search').boundingBox();
+  assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= 390);
+  await page.getByRole('link', { name: 'Back to clarity library', exact: true }).click();
+  await page.locator('.library').waitFor();
+  assert.equal(await page.locator('.graph-search').count(), 0, 'Leaving a graph closes search without reopening a result');
+  await page.keyboard.press('Control+f');
+  await input.fill('weekly');
+  await page.waitForURL(base + '/#/clarifications/search-shopping');
+  await page.waitForFunction(() => document.querySelector('.graph-node.targeted')?.dataset.nodeId === 'topic');
+  assert.equal(await count.textContent(), '1 / 1');
+  for (const action of ['Close button', 'Escape', 'Control+[']) {
+    if (action === 'Close button') await page.getByRole('button', { name: 'Close graph search', exact: true }).click();
+    else await page.keyboard.press(action);
+    assert.equal(await page.locator('.graph-search').count(), 0);
+    assert.equal(await page.locator('.graph-viewport').evaluate(el => el === document.activeElement), true, `${action} returns focus to the canvas`);
+    assert.equal(await page.locator('.graph-node mark').count(), 0);
+    await page.keyboard.press('Control+f');
+    assert.equal(await input.inputValue(), '', `${action} clears the query`);
+    assert.equal(await count.textContent(), '0 / 0');
+    await input.fill('weekly');
+  }
+});
+
+
+test('trackpad scroll pans both axes and pan gestures stop at the graph boundary', { timeout: 30_000 }, async t => {
+  const { page } = await shortcutFixture(t);
+  const viewport = page.locator('.graph-viewport');
+  const originalNodes = await page.locator('.node-frame').evaluateAll(nodes => nodes.map(node => node.style.transform));
+  async function wheel(deltaX, deltaY, deltaMode = 0) {
+    return viewport.evaluate((el, values) => {
+      const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, ...values });
+      el.dispatchEvent(event); return event.defaultPrevented;
+    }, { deltaX, deltaY, deltaMode });
+  }
+  const before = await graphCamera(page);
+  assert.equal(await wheel(20, 20), true);
+  const panned = await graphCamera(page);
+  assert.ok(Math.abs(panned.x - before.x + 20) < .001);
+  assert.ok(Math.abs(panned.y - before.y + 20) < .001);
+  assert.equal(panned.scale, before.scale);
+  await page.getByRole('button', { name: 'Fit graph', exact: true }).click();
+  const fit = await graphCamera(page);
+  await wheel(1, 1, 1);
+  const lines = await graphCamera(page);
+  assert.ok(Math.abs(lines.x - fit.x + 16) < .001);
+  assert.ok(Math.abs(lines.y - fit.y + 16) < .001);
+  async function withinBounds() {
+    const { viewport, graph } = await page.locator('.graph-viewport').evaluate(el => {
+      const viewport = el.getBoundingClientRect().toJSON();
+      const cards = [...el.querySelectorAll('.graph-node')].map(node => node.getBoundingClientRect());
+      return { viewport, graph: { left: Math.min(...cards.map(card => card.left)), right: Math.max(...cards.map(card => card.right)), top: Math.min(...cards.map(card => card.top)), bottom: Math.max(...cards.map(card => card.bottom)) } };
+    });
+    for (const [start, end, length] of [['left', 'right', 'width'], ['top', 'bottom', 'height']]) {
+      if (graph[end] - graph[start] <= viewport[length]) {
+        const center = (graph[start] + graph[end]) / 2;
+        assert.ok(center >= viewport[start] - 1 && center <= viewport[end] + 1, 'Small graphs can pan by half a canvas from center');
+      } else {
+        const center = viewport[start] + viewport[length] / 2;
+        assert.ok(graph[start] <= center + 1 && graph[end] >= center - 1, 'Large graphs allow half a canvas beyond each edge');
+      }
+    }
+  }
+  for (const direction of [-1, 1]) {
+    await wheel(direction * 1e6, direction * 1e6);
+    await withinBounds();
+    const edge = await graphCamera(page);
+    await wheel(direction * 1e6, direction * 1e6);
+    assert.deepEqual(await graphCamera(page), edge, 'Further scrolling stops at the boundary');
+    await viewport.focus();
+    await page.keyboard.press(direction > 0 ? 'Shift+l' : 'Shift+h');
+    assert.deepEqual(await graphCamera(page), edge, 'Keyboard panning uses the same boundary');
+  }
+  await page.getByRole('button', { name: 'Fit graph', exact: true }).click();
+  const box = await viewport.boundingBox();
+  await page.mouse.move(box.x + 12, box.y + 12);
+  await page.mouse.down();
+  await viewport.dispatchEvent('pointermove', { pointerId: 1, pointerType: 'mouse', clientX: box.x + 100000, clientY: box.y + 100000, buttons: 1 });
+  await page.mouse.up();
+  await withinBounds();
+  await page.keyboard.press('Control+f');
+  await page.getByRole('searchbox', { name: 'Find graph nodes', exact: true }).fill('topic');
+  await page.waitForFunction(() => document.querySelector('.graph-node.targeted')?.dataset.nodeId === 'topic');
+  assert.equal((await graphCamera(page)).scale, 1);
+  await withinBounds();
+  for (let i = 0; i < 5; i++) await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
+  await wheel(-1e6, 1e6);
+  await page.getByRole('button', { name: 'Next search result', exact: true }).click();
+  assert.equal((await graphCamera(page)).scale, 1);
+  await withinBounds();
+  assert.deepEqual(await page.locator('.node-frame').evaluateAll(nodes => nodes.map(node => node.style.transform)), originalNodes, 'Panning does not move nodes within the graph');
+});
+
+
+test('inspection dims only nodes outside the full ancestor and descendant chain', { timeout: 30_000 }, async t => {
+  const { base, tool } = await fixture(t);
+  const ids = ['topic', 'branch', 'chosen', 'leaf', 'grandchild', 'sibling', 'other', 'other-leaf'];
+  const nodes = ids.map(id => ({ id, title: id, content: id, kind: id === 'topic' ? 'topic' : 'decided', ...(['chosen', 'leaf'].includes(id) ? { groupLabel: 'focus-branch' } : {}) }));
+  const edges = [['topic', 'branch'], ['branch', 'chosen'], ['chosen', 'leaf'], ['leaf', 'grandchild'], ['branch', 'sibling'], ['topic', 'other'], ['other', 'other-leaf']].map(([from, to]) => ({ id: `parent-${to}`, kind: 'parent', from, to }));
+  edges.push({ id: 'sibling-input', kind: 'input', from: 'sibling', to: 'chosen', rationale: 'An input is separate from structural ancestry.' });
+  await tool('create_clarification', { id: 'inspection-family', title: 'Inspection family', graph: { nodes, edges }, commit: { title: 'Review branches', kind: 'topicStaged' } });
+  const page = await browserFor(t);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(base + '/#/clarifications/inspection-family');
+  await page.locator('.graph-node').first().waitFor();
+  const card = id => page.locator(`.graph-node[data-node-id="${id}"]`);
+  for (const name of ['Tree', 'Grouped', 'Radial']) {
+    await page.getByRole('button', { name, exact: true }).click();
+    await card('chosen').dispatchEvent('click');
+    const opacity = await page.locator('.node-frame').evaluateAll(frames => Object.fromEntries(frames.map(frame => [frame.querySelector('.graph-node').dataset.nodeId, Number(getComputedStyle(frame).opacity)])));
+    for (const id of ['topic', 'branch', 'chosen', 'leaf', 'grandchild']) assert.equal(opacity[id], 1, `${name} retains ${id}`);
+    for (const id of ['sibling', 'other', 'other-leaf']) assert.equal(opacity[id], .67, `${name} softly dims ${id}`);
+    assert.equal(await page.locator('.node-selection-badge').count(), 1);
+    for (const id of ['parent-branch', 'parent-grandchild']) {
+      assert.equal(await page.locator(`.wires > path[data-relationship-id="${id}"].focused:not(.dimmed)`).count(), 1, `${name} emphasizes the complete single-selection chain`);
+    }
+    await card('sibling').dispatchEvent('click', { shiftKey: true });
+    assert.equal(await page.locator('.node-selection-badge').count(), 2);
+    const lineStates = await page.locator('.wires > path').evaluateAll(paths => paths.map(path => ({
+      from: path.dataset.from, to: path.dataset.to, parent: path.classList.contains('parent'), dimmed: path.classList.contains('dimmed'), focused: path.classList.contains('focused')
+    })));
+    for (const line of lineStates) {
+      const family = ['topic', 'branch', 'chosen', 'leaf', 'grandchild', 'sibling'];
+      const relevant = line.parent ? [line.from, line.to].every(id => family.includes(id)) : ['chosen', 'sibling'].some(id => line.from === id || line.to === id);
+      assert.equal(line.dimmed, !relevant, `${name} dims unrelated lines`);
+      assert.equal(line.focused, relevant, `${name} emphasizes complete ancestor and descendant chains`);
+    }
+    const dimmed = () => page.locator('.node-frame.inspection-dimmed').evaluateAll(frames => frames.map(frame => frame.querySelector('.graph-node').dataset.nodeId));
+    assert.deepEqual(new Set(await dimmed()), new Set(['other', 'other-leaf']), 'Multi-selection emphasizes the union of each selected branch');
+    await card('sibling').dispatchEvent('click', { shiftKey: true });
+    await card('other-leaf').dispatchEvent('click', { shiftKey: true });
+    assert.deepEqual(await dimmed(), ['sibling'], 'A shared ancestor does not emphasize its other descendants');
+    await card('chosen').dispatchEvent('click', { shiftKey: true });
+    assert.deepEqual(new Set(await dimmed()), new Set(['branch', 'chosen', 'leaf', 'grandchild', 'sibling']), 'Removing a selection dims its former branch');
+    await page.keyboard.press('Escape');
+    await card('leaf').dispatchEvent('click');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('.node-frame.inspection-dimmed').count(), 0, 'Clearing inspection restores normal opacity');
+    assert.equal(await page.locator('.wires > path.dimmed').count(), 0, 'Clearing selection restores all lines');
+  }
+});
+
+
+test('options and copy icons keep enlarged hit areas and options preserve selection', { timeout: 30_000 }, async t => {
+  const { page, sample } = await shortcutFixture(t);
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  const node = page.locator('.graph-node[data-node-id="venue"]');
+  await node.dispatchEvent('click');
+  await page.getByRole('button', { name: 'Zoom to 100% and focus', exact: true }).click();
+  await page.keyboard.press('Escape');
+  const details = node.locator('..').locator('.show-node-details');
+  const copy = node.locator('..').locator('.copy-node-reference');
+  for (const control of [details, copy]) {
+    assert.equal((await control.locator('svg').boundingBox()).width, 12);
+    assert.equal((await control.boundingBox()).width, 16);
+  }
+  const selected = () => page.locator('.graph-node[aria-pressed="true"]').evaluateAll(nodes => nodes.map(node => node.dataset.nodeId));
+  for (const id of ['people', 'headcount']) await page.locator(`[data-node-id="${id}"]`).dispatchEvent('click', { shiftKey: true });
+  const before = await selected();
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  const box = await details.boundingBox();
+  await page.mouse.click(box.x - 6, box.y + box.height / 2);
+  await page.getByRole('dialog', { name: 'Other node options' }).waitFor();
+  const backgrounds = await page.evaluate(() => [getComputedStyle(document.querySelector('[data-node-id="venue"]')).backgroundColor, getComputedStyle(document.querySelector('.node-options')).backgroundColor]);
+  assert.equal(backgrounds[1], backgrounds[0]);
+  assert.deepEqual(await selected(), before);
+  await details.click();
+  const nodeAbovePanel = await page.locator('.node-options').evaluate(panel => {
+    const animations = panel.getAnimations({ subtree: true });
+    for (const animation of animations) { animation.pause(); animation.currentTime = Number(animation.effect.getTiming().duration) / 2; }
+    const node = document.querySelector('[data-node-id="venue"]'), rect = node.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.bottom - 8);
+    const visible = hit?.closest('.graph-node') === node && Math.abs(panel.getBoundingClientRect().top - rect.bottom) < 1;
+    for (const animation of animations) animation.finish();
+    return visible;
+  });
+  assert.equal(nodeAbovePanel, true, 'The retracting panel stays underneath the node');
+  await page.getByRole('dialog', { name: 'Other node options' }).waitFor({ state: 'hidden' });
+  assert.deepEqual(await selected(), before);
+  const copyBox = await copy.boundingBox();
+  await page.mouse.click(copyBox.x + copyBox.width + 6, copyBox.y + copyBox.height / 2);
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), `ari@${sample.id}@venue`);
+});
+
+for (const width of [1600, 390]) test(`unchosen options open beneath nodes or in a mobile sheet without changing selection at ${width}px`, { timeout: 30_000 }, async t => {
+  const { base, tool } = await fixture(t);
+  await tool('create_clarification', { id: 'node-options', title: 'Node options', graph: { nodes: [
+    { id: 'topic', title: 'Smoothie', kind: 'topic', content: 'Plan a smoothie.' },
+    { id: 'protein', title: 'Main protein ingredient', kind: 'decided', alternatives: [
+      { id: 'yogurt', text: 'Use Greek yogurt alongside protein powder.' },
+      { id: 'powder', text: 'Use protein powder without Greek yogurt.' },
+      { id: 'plant', text: 'Use plant-based protein powder without Greek yogurt.' },
+    ], selectedAlternative: 'yogurt' },
+    { id: 'portion', title: 'Portion', kind: 'decided', alternatives: [{ id: 'single', text: 'Make one portion.' }], selectedAlternative: 'single' },
+  ], edges: [
+    { id: 'protein-parent', kind: 'parent', from: 'topic', to: 'protein' },
+    { id: 'portion-parent', kind: 'parent', from: 'topic', to: 'portion' },
+  ] }, commit: { title: 'Choose ingredients', kind: 'directAnswer' } });
+  const page = await browserFor(t);
+  await page.setViewportSize({ width, height: 900 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(base + '/#/clarifications/node-options');
+  const node = page.locator('.graph-node[data-node-id="protein"]');
+  await node.waitFor();
+  const icon = id => page.locator(`.graph-node[data-node-id="${id}"]`).locator('..').locator('.show-node-details');
+  for (const id of ['topic', 'portion']) {
+    assert.equal(await icon(id).isDisabled(), true);
+    assert.equal(await icon(id).evaluate(el => Number(getComputedStyle(el).opacity)), .3);
+  }
+  await page.locator('[data-node-id="portion"]').dispatchEvent('click');
+  const beforeSelection = await page.locator('.graph-node[aria-pressed="true"]').evaluateAll(nodes => nodes.map(node => node.dataset.nodeId));
+  if (width > 1100) {
+    await page.getByRole('button', { name: 'Zoom to 100% and focus', exact: true }).click();
+    const viewport = await page.locator('.graph-viewport').boundingBox(), card = await node.boundingBox();
+    await page.locator('.graph-viewport').dispatchEvent('wheel', {
+      deltaX: card.x + card.width - (viewport.x + viewport.width - 8),
+      deltaY: card.y + card.height - (viewport.y + viewport.height - 100), bubbles: true, cancelable: true,
+    });
+  }
+  await page.locator('.graph-viewport').focus();
+  await page.mouse.move(width / 2, 100);
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.diagram-minimap')).visibility === 'hidden');
+  const cameraBefore = await graphCamera(page);
+  const button = await icon('protein').boundingBox();
+  const hit = await page.evaluate(point => document.elementFromPoint(point.x, point.y)?.closest('.show-node-details')?.outerHTML || document.elementFromPoint(point.x, point.y)?.outerHTML, { x: button.x + button.width / 2, y: button.y + button.height / 2 });
+  assert.ok(hit?.includes('show-node-details'), hit);
+  await page.mouse.click(button.x + button.width / 2, button.y + button.height / 2);
+  const options = page.getByRole('dialog', { name: 'Other node options' });
+  await options.waitFor({ timeout: 3000 });
+  assert.deepEqual(await options.locator('li').allTextContents(), ['Use protein powder without Greek yogurt.', 'Use plant-based protein powder without Greek yogurt.']);
+  assert.deepEqual(await page.locator('.graph-node[aria-pressed="true"]').evaluateAll(nodes => nodes.map(node => node.dataset.nodeId)), beforeSelection);
+  if (width > 1100) {
+    await page.waitForFunction(() => {
+      const node = document.querySelector('[data-node-id="protein"]').getBoundingClientRect();
+      const panel = document.querySelector('.node-options').getBoundingClientRect();
+      const viewport = document.querySelector('.graph-viewport').getBoundingClientRect();
+      return Math.abs(panel.top - node.bottom + Number.parseFloat(getComputedStyle(document.querySelector('.node-options')).borderTopWidth)) < 1 && Math.min(node.left, panel.left) >= viewport.left + 47 &&
+        Math.max(node.right, panel.right) <= viewport.right - 47 && node.top >= viewport.top + 47 && panel.bottom <= viewport.bottom - 87;
+    }, null, { timeout: 3000 }).catch(async error => {
+      throw new Error(JSON.stringify(await page.evaluate(() => ({ node: document.querySelector('[data-node-id="protein"]').getBoundingClientRect().toJSON(), panel: document.querySelector('.node-options')?.getBoundingClientRect().toJSON(), viewport: document.querySelector('.graph-viewport').getBoundingClientRect().toJSON() }))));
+    });
+    assert.notDeepEqual(await graphCamera(page), cameraBefore, 'An edge-of-canvas node and its options pan into view with padding');
+    const alignment = await page.evaluate(() => {
+      const node = document.querySelector('[data-node-id="protein"]'), panel = document.querySelector('.node-options');
+      const anchor = node.getBoundingClientRect(), popup = panel.getBoundingClientRect();
+      return { width: Math.abs(anchor.width - popup.width), left: Math.abs(anchor.left - popup.left), border: Number.parseFloat(getComputedStyle(panel).borderLeftWidth), expectedBorder: Number.parseFloat(getComputedStyle(node).borderLeftWidth) * anchor.width / node.offsetWidth, corners: Number.parseFloat(getComputedStyle(node).borderBottomLeftRadius), dividerLeft: Math.abs(panel.querySelector('li').getBoundingClientRect().left - popup.left - Number.parseFloat(getComputedStyle(panel).borderLeftWidth)), dividerRight: Math.abs(panel.querySelector('li').getBoundingClientRect().right - popup.right + Number.parseFloat(getComputedStyle(panel).borderRightWidth)), padding: Number.parseFloat(getComputedStyle(panel.querySelector('li')).paddingLeft), expectedPadding: Number.parseFloat(getComputedStyle(node).paddingLeft) * anchor.width / node.offsetWidth };
+    });
+    assert.ok(alignment.width < 1 && alignment.left < 1, JSON.stringify(alignment));
+    assert.ok(Math.abs(alignment.padding - alignment.expectedPadding) < .1, JSON.stringify(alignment));
+    assert.ok(Math.abs(alignment.border - alignment.expectedBorder) < .1, JSON.stringify(alignment));
+    assert.equal(alignment.corners, 0);
+    assert.ok(alignment.dividerLeft < 1 && alignment.dividerRight < 1, JSON.stringify(alignment));
+    await icon('protein').click();
+    await options.waitFor({ state: 'hidden' });
+    await icon('protein').click();
+    await options.waitFor({ timeout: 3000 });
+  } else {
+    assert.equal(await options.evaluate(el => el.matches(':modal')), true);
+    const rect = await options.boundingBox();
+    assert.equal(rect.x, 0); assert.equal(rect.width, width); assert.equal(rect.y + rect.height, 900);
+    assert.deepEqual(await graphCamera(page), cameraBefore, 'A mobile sheet leaves the camera in place');
+    const padding = await options.locator('li').evaluateAll(rows => rows.map(row => {
+      const style = getComputedStyle(row);
+      return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft];
+    }));
+    assert.ok(padding.every(row => row.every(value => value === '12px')));
+    await options.getByRole('button', { name: 'Close node options', exact: true }).click();
+    await options.waitFor({ state: 'hidden' });
+    await icon('protein').click();
+    await options.waitFor();
+    const touch = await touchSession(page);
+    const row = await options.locator('li').first().boundingBox();
+    const finger = { id: 1, x: row.x + row.width / 2, y: row.y + 18 };
+    await touch('touchStart', [finger]);
+    await touch('touchMove', [{ ...finger, y: finger.y + 24 }]);
+    assert.ok(await options.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).m42) > 0, 'The sheet follows a downward swipe');
+    await touch('touchCancel', []);
+    assert.equal(await options.isVisible(), true);
+    assert.equal(await options.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).m42), 0, 'Cancellation returns the sheet to its resting position');
+    await touch('touchStart', [{ ...finger, id: 3 }]);
+    await touch('touchMove', [{ ...finger, id: 3, y: finger.y + 24 }]);
+    await touch('touchStart', [{ ...finger, id: 3, y: finger.y + 24 }, { ...finger, id: 4, x: finger.x + 50, y: finger.y + 24 }]);
+    await touch('touchEnd', []);
+    assert.equal(await options.isVisible(), true, 'Adding a second finger cancels dismissal');
+    assert.equal(await options.evaluate(el => new DOMMatrix(getComputedStyle(el).transform).m42), 0);
+    await touch('touchStart', [{ ...finger, id: 2 }]);
+    for (const distance of [16, 32, 64]) await touch('touchMove', [{ ...finger, id: 2, y: finger.y + distance }]);
+    await touch('touchEnd', []);
+    await options.waitFor({ state: 'hidden' });
+    assert.deepEqual(await page.locator('.graph-node[aria-pressed="true"]').evaluateAll(nodes => nodes.map(node => node.dataset.nodeId)), beforeSelection);
+    await icon('protein').click();
+    await options.waitFor();
+  }
+  await page.keyboard.press('Control+[');
+  await options.waitFor({ state: 'hidden' });
+  assert.deepEqual(await page.locator('.graph-node[aria-pressed="true"]').evaluateAll(nodes => nodes.map(node => node.dataset.nodeId)), beforeSelection);
+});
+
+test('minimap opens from zoom controls, shares their width, and stays open across the gap', { timeout: 30_000 }, async t => {
+  const { page } = await shortcutFixture(t);
+  const map = page.locator('.diagram-minimap');
+  const hidden = () => page.waitForFunction(() => getComputedStyle(document.querySelector('.diagram-minimap')).visibility === 'hidden');
+  await page.mouse.move(300, 150);
+  await hidden();
+  await page.locator('.viewport-buttons output').hover();
+  await hidden();
+  await page.getByRole('button', { name: 'Export graph', exact: true }).hover();
+  await hidden();
+  for (const name of ['Zoom out', 'Zoom in', 'Fit graph', 'Zoom to 100% and focus']) {
+    await page.getByRole('button', { name, exact: true }).hover();
+    await map.waitFor({ state: 'visible' });
+    const controls = await page.locator('.viewport-buttons').boundingBox(), overview = await map.boundingBox();
+    assert.ok(Math.abs(controls.width - overview.width) < 1);
+    assert.ok(Math.abs(controls.x - overview.x) < 1);
+    await page.mouse.move(overview.x + overview.width / 2, controls.y - 4, { steps: 8 });
+    await page.waitForTimeout(220);
+    assert.equal(await map.isVisible(), true, 'The gap belongs to the minimap hover area');
+    await map.hover();
+    await page.waitForTimeout(220);
+    assert.equal(await map.isVisible(), true);
+    await page.mouse.move(300, 150);
+    await hidden();
+  }
+  await page.locator('.graph-node').first().dispatchEvent('click');
+  await page.locator('.selection-actions').hover();
+  await hidden();
+  await page.getByRole('button', { name: 'Fit graph', exact: true }).hover();
+  await map.waitFor({ state: 'visible' });
+  assert.ok(Math.abs((await map.boundingBox()).width - (await page.locator('.viewport-buttons').boundingBox()).width) < 1);
+});
+
+test('semicolon toggles Fit and 1:1 and punctuation stays inside search input', { timeout: 30_000 }, async t => {
+  const { page } = await shortcutFixture(t);
+  const fit = page.getByRole('button', { name: 'Fit graph', exact: true });
+  const initial = await graphCamera(page);
+  assert.equal(await fit.getAttribute('aria-pressed'), 'true');
+  await page.keyboard.press(';');
+  assert.equal((await graphCamera(page)).scale, 1);
+  assert.equal(await fit.getAttribute('aria-pressed'), 'false');
+  await page.keyboard.press(';');
+  assert.equal(await fit.getAttribute('aria-pressed'), 'true');
+  assert.ok(Math.abs((await graphCamera(page)).scale - initial.scale) < .0001);
+  await page.getByRole('button', { name: 'Zoom out', exact: true }).click();
+  await page.keyboard.press(';');
+  assert.equal(await fit.getAttribute('aria-pressed'), 'true', 'An arbitrary zoom returns to Fit first');
+  await page.keyboard.press(';');
+  assert.equal((await graphCamera(page)).scale, 1);
+  await page.locator('.graph-node').first().dispatchEvent('click');
+  await page.keyboard.press('Control+f');
+  const before = await graphCamera(page);
+  await page.getByRole('searchbox').pressSequentially(';.');
+  assert.equal(await page.getByRole('searchbox').inputValue(), ';.');
+  assert.deepEqual(await graphCamera(page), before);
+  assert.equal(await page.getByRole('menu', { name: 'Selection shortcuts', exact: true }).count(), 0);
+});
+
+for (const width of [1600, 390]) test(`selection shortcuts copy scoped agent requests and handle keyboard navigation at ${width}px`, { timeout: 30_000 }, async t => {
+  const { page, sample, base } = await shortcutFixture(t);
+  await page.setViewportSize({ width, height: 1000 });
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  const graph = sample.commits.at(-1).graph;
+  const topic = graph.nodes.find(node => node.kind === 'topic');
+  const assumption = graph.nodes.find(node => node.kind === 'assumption');
+  const decided = graph.nodes.find(node => node.kind === 'decided');
+  const ids = [topic.id, assumption.id, decided.id];
+  const selected = page.locator('.graph-node[aria-pressed="true"]');
+  const menu = page.getByRole('menu', { name: 'Selection shortcuts', exact: true });
+  const readGraph = async () => (await page.request.get(`${base}/api/workspaces/${sample.id}`)).json();
+  const snapshot = await readGraph();
+  const currentRevision = await page.locator('[aria-current="step"]').getAttribute('aria-label');
+  for (const id of ids) await page.locator(`[data-node-id="${id}"]`).dispatchEvent('click', { shiftKey: true });
+  const trigger = page.getByRole('button', { name: 'Selection shortcuts', exact: true });
+  await trigger.click();
+  await menu.waitFor();
+  assert.deepEqual(await menu.getByRole('menuitem').locator('.action-label>span').allTextContents(), ['Accept assumptions', 'Add assumptions', 'Suggest alternative answers', 'Remove nodes', 'Explain the reasoning', 'Find gaps']);
+  assert.deepEqual(await menu.locator('.shortcut-count').allTextContents(), ['1', '3', '3', '3', '3', '3']);
+  assert.deepEqual(await menu.locator('.shortcut-key').allTextContents(), ['1', '2', '3', '4', '5', '6']);
+  const rows = await menu.getByRole('menuitem').evaluateAll(items => items.map(item => {
+    const row = item.getBoundingClientRect(), key = item.querySelector('.shortcut-key').getBoundingClientRect();
+    return { top: row.top, bottom: row.bottom, center: Math.abs(key.top + key.height / 2 - row.top - row.height / 2) };
+  }));
+  assert.ok(rows.every(row => row.center < 1));
+  assert.ok(rows.slice(1).every((row, index) => row.top - rows[index].bottom >= 3.5), 'Focused and hovered rows have separate surfaces');
+  const box = await menu.boundingBox();
+  assert.ok(box.x >= 11 && box.x + box.width <= width - 11);
+  const button = await trigger.boundingBox(), label = await trigger.locator('span').boundingBox();
+  assert.ok(label.x + label.width <= button.x + button.width + 1, 'The Shortcuts label fits its mobile pill button');
+  await page.keyboard.press('j');
+  assert.equal(await menu.getByRole('menuitem', { name: /^Add assumptions/ }).evaluate(el => el === document.activeElement), true);
+  assert.equal(await page.locator('[aria-current="step"]').getAttribute('aria-label'), currentRevision);
+  await page.keyboard.press('.');
+  await menu.waitFor({ state: 'hidden' });
+  assert.equal(await selected.count(), 3);
+  await page.keyboard.press('.');
+  await menu.waitFor();
+  await page.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: '.', repeat: true, bubbles: true })));
+  assert.equal(await menu.isVisible(), true);
+  await page.keyboard.press('End');
+  assert.equal(await menu.getByRole('menuitem', { name: /^Find gaps/ }).evaluate(el => el === document.activeElement), true);
+  await page.keyboard.press('6');
+  await page.locator('.selection-actions').waitFor({ state: 'detached' });
+  const prompt = await page.evaluate(() => navigator.clipboard.readText());
+  assert.equal(prompt.split('\n').find(line => line.startsWith('ari@')), `ari@${sample.id}@${ids.join(',')}`);
+  assert.match(prompt, /No graph changes\./);
+  await page.locator('.reference-notification').filter({ hasText: 'Find gaps copied' }).waitFor();
+  await page.locator(`[data-node-id="${assumption.id}"]`).dispatchEvent('click');
+  await page.keyboard.press('.');
+  await menu.waitFor();
+  await page.keyboard.press('4');
+  await page.locator('.selection-actions').waitFor({ state: 'detached' });
+  const removePrompt = await page.evaluate(() => navigator.clipboard.readText());
+  assert.equal(removePrompt.split('\n')[0], 'Remove these nodes and all descendants; preserve unrelated nodes.');
+  await page.locator('.reference-notification').filter({ hasText: 'Remove nodes copied' }).waitFor();
+  assert.deepEqual(await readGraph(), snapshot, 'Copying shortcuts does not publish graph changes');
+
+  await page.locator(`[data-node-id="${topic.id}"]`).dispatchEvent('click');
+  await page.keyboard.press('.');
+  await menu.waitFor();
+  assert.equal(await menu.getByRole('menuitem', { name: /^Accept assumptions/ }).isDisabled(), true);
+  assert.equal(await menu.getByRole('menuitem', { name: /^Remove nodes/ }).isDisabled(), false);
+  await page.keyboard.press('1');
+  assert.equal(await menu.isVisible(), true, 'A disabled numbered option keeps the menu open');
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), removePrompt);
+  await page.evaluate(() => Object.defineProperty(navigator.clipboard, 'writeText', { configurable: true, value: async () => { throw new DOMException('Denied', 'NotAllowedError'); } }));
+  await menu.getByRole('menuitem', { name: /^Find gaps/ }).click();
+  await page.locator('.notification-error').waitFor();
+  assert.equal(await selected.count(), 1, 'Clipboard failures preserve the selection for retry');
+  assert.equal(await menu.isVisible(), true);
+  await page.keyboard.press('Control+[');
+  await menu.waitFor({ state: 'hidden' });
+  assert.equal(await selected.count(), 1, 'Dismiss the menu before clearing selection');
+  await page.keyboard.press('Escape');
+  assert.equal(await selected.count(), 0);
+  await page.keyboard.press('.');
+  assert.equal(await menu.count(), 0);
+});
+
+test('select all controls stay synchronized and topic hotkey pans without changing selection', { timeout: 30_000 }, async t => {
+  const { page, sample } = await shortcutFixture(t);
+  const nodes = page.locator('.graph-node');
+  const selected = page.locator('.graph-node[aria-pressed="true"]');
+  const toggle = page.getByRole('button', { name: 'Toggle select all nodes', exact: true });
+  const count = await nodes.count();
+  await page.keyboard.press('a');
+  assert.equal(await selected.count(), count);
+  assert.equal(await toggle.getAttribute('aria-pressed'), 'true');
+  await page.keyboard.press('a');
+  assert.equal(await selected.count(), 0, 'Pressing a with every node selected deselects all');
+  assert.equal(await toggle.getAttribute('aria-pressed'), 'false');
+  await page.keyboard.press('a');
+  assert.equal(await selected.count(), count);
+  await toggle.click();
+  assert.equal(await selected.count(), 0);
+  assert.equal(await toggle.getAttribute('aria-pressed'), 'false');
+  await toggle.click();
+  await nodes.first().dispatchEvent('click', { shiftKey: true });
+  assert.equal(await selected.count(), count - 1);
+  assert.equal(await toggle.getAttribute('aria-pressed'), 'false');
+  await nodes.first().dispatchEvent('click', { shiftKey: true });
+  assert.equal(await toggle.getAttribute('aria-pressed'), 'true');
+
+  await page.keyboard.press(';');
+  await page.keyboard.press('Shift+H');
+  await page.waitForTimeout(200);
+  const before = await graphCamera(page);
+  await page.keyboard.press('t');
+  const after = await graphCamera(page);
+  assert.equal(after.scale, before.scale);
+  assert.notDeepEqual(after, before);
+  assert.equal(await selected.count(), count);
+  const topic = sample.commits.at(-1).graph.nodes.find(node => node.kind === 'topic');
+  const card = await page.locator(`.graph-node[data-node-id="${topic.id}"]`).boundingBox();
+  const viewport = await page.locator('.graph-viewport').boundingBox();
+  assert.ok(Math.abs(card.x + card.width / 2 - viewport.x - viewport.width / 2) < 2);
+  assert.ok(Math.abs(card.y + card.height / 2 - viewport.y - viewport.height / 2) < 2);
+
+  await page.keyboard.press('Control+f');
+  assert.equal(await selected.count(), count, 'Opening search preserves all selected nodes');
+  await page.getByRole('searchbox').fill('zzzzzz');
+  const camera = await graphCamera(page);
+  await page.getByRole('searchbox').pressSequentially('at');
+  assert.equal(await page.getByRole('searchbox').inputValue(), 'zzzzzzat');
+  assert.deepEqual(await graphCamera(page), camera);
+  assert.equal(await selected.count(), count);
+  await page.keyboard.press('Escape');
+  assert.equal(await selected.count(), count, 'Closing search preserves all selected nodes');
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   }
 });

@@ -19,17 +19,24 @@ defineExpose({ toggle });
       <dt class="mobile-revision"><kbd>h</kbd> <kbd>l</kbd> / <kbd>←</kbd> <kbd>→</kbd></dt><dd class="mobile-revision">Previous / next revision from anywhere</dd>
       <dt><kbd>gg</kbd> / <kbd>Home</kbd></dt><dd>First revision</dd>
       <dt><kbd>G</kbd> / <kbd>End</kbd></dt><dd>Last revision</dd>
-      <dt><kbd>1</kbd> <kbd>10</kbd> …</dt><dd>Focus a node and its parent / children; ambiguous numbers wait 1 second</dd>
-      <dt><kbd>yy</kbd></dt><dd>Copy the clarification reference</dd>
+      <dt><kbd>1</kbd> <kbd>10</kbd> …</dt><dd>Select and frame a node with its parent / children; ambiguous numbers wait 1 second, Enter confirms immediately</dd>
+      <dt><kbd>.</kbd></dt><dd>Open selection shortcuts; press 1–6 to copy an agent request for selected nodes</dd>
+      <dt><kbd>a</kbd></dt><dd>Toggle select all visible nodes</dd>
+      <dt><kbd>t</kbd></dt><dd>Pan to the topic node, preserving selection and zoom where it fits</dd>
+      <dt><kbd>;</kbd></dt><dd>Toggle Fit graph / 1:1 zoom</dd>
+      <dt><kbd>yy</kbd></dt><dd>Copy selected node references, or the clarification reference</dd>
       <dt><kbd>u</kbd></dt><dd>Open links; j/k or ↓/↑ to move, Enter to open, Ctrl+Enter for a new tab</dd>
       <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>Previous / next graph layout</dd>
+      <dt><kbd>Ctrl f</kbd></dt><dd>Find nodes in this graph or across all graphs; Enter / Shift+Enter for next / previous</dd>
       <dt><kbd>f</kbd></dt><dd>Toggle fullscreen canvas; Escape restores controls</dd>
       <dt><kbd>i</kbd></dt><dd>Hide / show input relationships</dd>
       <dt><kbd>c</kbd></dt><dd>Switch Current / Changed</dd>
       <dt><kbd>s</kbd></dt><dd>Hide / show constraints</dd>
-      <dt><kbd>Esc</kbd> / <kbd>Ctrl [</kbd></dt><dd>Back to overview; close dialogs</dd>
+      <dt><kbd>Esc</kbd> / <kbd>Ctrl [</kbd></dt><dd>Deselect nodes; close dialogs; back to overview</dd>
       <dt><kbd>?</kbd></dt><dd>Open / close this reference</dd>
       <dt class="desktop-revision"><kbd>←</kbd> <kbd>→</kbd></dt><dd class="desktop-revision">Pan when the graph is focused</dd>
+      <dt><kbd>Shift drag</kbd></dt><dd>Toggle nodes in a selection box</dd>
+      <dt><kbd>Shift click</kbd></dt><dd>Toggle a node in the selection</dd>
       <dt><kbd>Shift h/j/k/l</kbd></dt><dd>Pan left/down/up/right from anywhere</dd>
       <dt><kbd>−</kbd> <kbd>=</kbd></dt><dd>Zoom out / in from anywhere</dd>
       <dt><kbd>0</kbd></dt><dd>Fit when the graph is focused</dd>

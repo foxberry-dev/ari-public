@@ -20,18 +20,18 @@
             "content": "Core four teammates",
             "alternatives": [
               {
-                "label": "Core four teammates",
-                "description": "",
+                "id": "Core four teammates",
+                "text": "Core four teammates",
                 "recommended": false
               },
               {
-                "label": "Whole 12-person team",
-                "description": "",
+                "id": "Whole 12-person team",
+                "text": "Whole 12-person team",
                 "recommended": false
               },
               {
-                "label": "Team and contractors",
-                "description": "",
+                "id": "Team and contractors",
+                "text": "Team and contractors",
                 "recommended": false
               }
             ],
@@ -45,18 +45,18 @@
             "content": "Sit-down lunch",
             "alternatives": [
               {
-                "label": "Sit-down lunch",
-                "description": "",
+                "id": "Sit-down lunch",
+                "text": "Sit-down lunch",
                 "recommended": false
               },
               {
-                "label": "Casual café",
-                "description": "",
+                "id": "Casual café",
+                "text": "Casual café",
                 "recommended": false
               },
               {
-                "label": "Takeaway together",
-                "description": "",
+                "id": "Takeaway together",
+                "text": "Takeaway together",
                 "recommended": false
               }
             ],
@@ -70,18 +70,18 @@
             "content": "€35 per person",
             "alternatives": [
               {
-                "label": "€25 per person",
-                "description": "",
+                "id": "€25 per person",
+                "text": "€25 per person",
                 "recommended": false
               },
               {
-                "label": "€35 per person",
-                "description": "",
+                "id": "€35 per person",
+                "text": "€35 per person",
                 "recommended": false
               },
               {
-                "label": "€50 per person",
-                "description": "",
+                "id": "€50 per person",
+                "text": "€50 per person",
                 "recommended": false
               }
             ],
@@ -95,18 +95,18 @@
             "content": "Four people",
             "alternatives": [
               {
-                "label": "Four people",
-                "description": "",
+                "id": "Four people",
+                "text": "Four people",
                 "recommended": false
               },
               {
-                "label": "Six people",
-                "description": "",
+                "id": "Six people",
+                "text": "Six people",
                 "recommended": false
               },
               {
-                "label": "Twelve people",
-                "description": "",
+                "id": "Twelve people",
+                "text": "Twelve people",
                 "recommended": false
               }
             ],
@@ -120,18 +120,18 @@
             "content": "Core team only",
             "alternatives": [
               {
-                "label": "Core team only",
-                "description": "",
+                "id": "Core team only",
+                "text": "Core team only",
                 "recommended": false
               },
               {
-                "label": "Include contractors",
-                "description": "",
+                "id": "Include contractors",
+                "text": "Include contractors",
                 "recommended": false
               },
               {
-                "label": "Include guests",
-                "description": "",
+                "id": "Include guests",
+                "text": "Include guests",
                 "recommended": false
               }
             ],
@@ -145,18 +145,18 @@
             "content": "No restrictions",
             "alternatives": [
               {
-                "label": "No restrictions",
-                "description": "",
+                "id": "No restrictions",
+                "text": "No restrictions",
                 "recommended": false
               },
               {
-                "label": "One vegetarian and one vegan",
-                "description": "",
+                "id": "One vegetarian and one vegan",
+                "text": "One vegetarian and one vegan",
                 "recommended": false
               },
               {
-                "label": "Still checking",
-                "description": "",
+                "id": "Still checking",
+                "text": "Still checking",
                 "recommended": false
               }
             ],
@@ -170,18 +170,18 @@
             "content": "Walkable café",
             "alternatives": [
               {
-                "label": "Walkable café",
-                "description": "",
+                "id": "Walkable café",
+                "text": "Walkable café",
                 "recommended": false
               },
               {
-                "label": "Italian restaurant",
-                "description": "",
+                "id": "Italian restaurant",
+                "text": "Italian restaurant",
                 "recommended": false
               },
               {
-                "label": "Takeaway near the office",
-                "description": "",
+                "id": "Takeaway near the office",
+                "text": "Takeaway near the office",
                 "recommended": false
               }
             ],
@@ -194,18 +194,18 @@
             "content": "€140 total",
             "alternatives": [
               {
-                "label": "€100 total",
-                "description": "",
+                "id": "€100 total",
+                "text": "€100 total",
                 "recommended": false
               },
               {
-                "label": "€140 total",
-                "description": "",
+                "id": "€140 total",
+                "text": "€140 total",
                 "recommended": false
               },
               {
-                "label": "€200 total",
-                "description": "",
+                "id": "€200 total",
+                "text": "€200 total",
                 "recommended": false
               }
             ],
@@ -219,18 +219,18 @@
             "content": "Include soft drinks",
             "alternatives": [
               {
-                "label": "Include soft drinks",
-                "description": "",
+                "id": "Include soft drinks",
+                "text": "Include soft drinks",
                 "recommended": false
               },
               {
-                "label": "Include all drinks",
-                "description": "",
+                "id": "Include all drinks",
+                "text": "Include all drinks",
                 "recommended": false
               },
               {
-                "label": "Food only",
-                "description": "",
+                "id": "Food only",
+                "text": "Food only",
                 "recommended": false
               }
             ],
@@ -244,18 +244,18 @@
             "content": "Not needed",
             "alternatives": [
               {
-                "label": "One vegan main required",
-                "description": "",
+                "id": "One vegan main required",
+                "text": "One vegan main required",
                 "recommended": false
               },
               {
-                "label": "More than one vegan option",
-                "description": "",
+                "id": "More than one vegan option",
+                "text": "More than one vegan option",
                 "recommended": false
               },
               {
-                "label": "Not needed",
-                "description": "",
+                "id": "Not needed",
+                "text": "Not needed",
                 "recommended": false
               }
             ],
@@ -269,18 +269,18 @@
             "content": "No known allergies",
             "alternatives": [
               {
-                "label": "No known allergies",
-                "description": "",
+                "id": "No known allergies",
+                "text": "No known allergies",
                 "recommended": false
               },
               {
-                "label": "Need to check",
-                "description": "",
+                "id": "Need to check",
+                "text": "Need to check",
                 "recommended": false
               },
               {
-                "label": "Specific allergy requirements",
-                "description": "",
+                "id": "Specific allergy requirements",
+                "text": "Specific allergy requirements",
                 "recommended": false
               }
             ],
@@ -411,18 +411,18 @@
             "content": "Core four teammates",
             "alternatives": [
               {
-                "label": "Core four teammates",
-                "description": "",
+                "id": "Core four teammates",
+                "text": "Core four teammates",
                 "recommended": false
               },
               {
-                "label": "Whole 12-person team",
-                "description": "",
+                "id": "Whole 12-person team",
+                "text": "Whole 12-person team",
                 "recommended": false
               },
               {
-                "label": "Team and contractors",
-                "description": "",
+                "id": "Team and contractors",
+                "text": "Team and contractors",
                 "recommended": false
               }
             ],
@@ -436,18 +436,18 @@
             "content": "Sit-down lunch",
             "alternatives": [
               {
-                "label": "Sit-down lunch",
-                "description": "",
+                "id": "Sit-down lunch",
+                "text": "Sit-down lunch",
                 "recommended": false
               },
               {
-                "label": "Casual café",
-                "description": "",
+                "id": "Casual café",
+                "text": "Casual café",
                 "recommended": false
               },
               {
-                "label": "Takeaway together",
-                "description": "",
+                "id": "Takeaway together",
+                "text": "Takeaway together",
                 "recommended": false
               }
             ],
@@ -461,18 +461,18 @@
             "content": "€35 per person",
             "alternatives": [
               {
-                "label": "€25 per person",
-                "description": "",
+                "id": "€25 per person",
+                "text": "€25 per person",
                 "recommended": false
               },
               {
-                "label": "€35 per person",
-                "description": "",
+                "id": "€35 per person",
+                "text": "€35 per person",
                 "recommended": false
               },
               {
-                "label": "€50 per person",
-                "description": "",
+                "id": "€50 per person",
+                "text": "€50 per person",
                 "recommended": false
               }
             ],
@@ -486,18 +486,18 @@
             "content": "Four attendees",
             "alternatives": [
               {
-                "label": "Four people",
-                "description": "",
+                "id": "Four people",
+                "text": "Four attendees",
                 "recommended": false
               },
               {
-                "label": "Six people",
-                "description": "",
+                "id": "Six people",
+                "text": "Six people",
                 "recommended": false
               },
               {
-                "label": "Twelve people",
-                "description": "",
+                "id": "Twelve people",
+                "text": "Twelve people",
                 "recommended": false
               }
             ],
@@ -511,18 +511,18 @@
             "content": "No restrictions",
             "alternatives": [
               {
-                "label": "No restrictions",
-                "description": "",
+                "id": "No restrictions",
+                "text": "No restrictions",
                 "recommended": false
               },
               {
-                "label": "One vegetarian and one vegan",
-                "description": "",
+                "id": "One vegetarian and one vegan",
+                "text": "One vegetarian and one vegan",
                 "recommended": false
               },
               {
-                "label": "Still checking",
-                "description": "",
+                "id": "Still checking",
+                "text": "Still checking",
                 "recommended": false
               }
             ],
@@ -536,18 +536,18 @@
             "content": "Walkable café",
             "alternatives": [
               {
-                "label": "Walkable café",
-                "description": "",
+                "id": "Walkable café",
+                "text": "Walkable café",
                 "recommended": false
               },
               {
-                "label": "Italian restaurant",
-                "description": "",
+                "id": "Italian restaurant",
+                "text": "Italian restaurant",
                 "recommended": false
               },
               {
-                "label": "Takeaway near the office",
-                "description": "",
+                "id": "Takeaway near the office",
+                "text": "Takeaway near the office",
                 "recommended": false
               }
             ],
@@ -560,18 +560,18 @@
             "content": "€140 total",
             "alternatives": [
               {
-                "label": "€100 total",
-                "description": "",
+                "id": "€100 total",
+                "text": "€100 total",
                 "recommended": false
               },
               {
-                "label": "€140 total",
-                "description": "",
+                "id": "€140 total",
+                "text": "€140 total",
                 "recommended": false
               },
               {
-                "label": "€200 total",
-                "description": "",
+                "id": "€200 total",
+                "text": "€200 total",
                 "recommended": false
               }
             ],
@@ -585,18 +585,18 @@
             "content": "Include soft drinks",
             "alternatives": [
               {
-                "label": "Include soft drinks",
-                "description": "",
+                "id": "Include soft drinks",
+                "text": "Include soft drinks",
                 "recommended": false
               },
               {
-                "label": "Include all drinks",
-                "description": "",
+                "id": "Include all drinks",
+                "text": "Include all drinks",
                 "recommended": false
               },
               {
-                "label": "Food only",
-                "description": "",
+                "id": "Food only",
+                "text": "Food only",
                 "recommended": false
               }
             ],
@@ -610,18 +610,18 @@
             "content": "Not needed",
             "alternatives": [
               {
-                "label": "One vegan main required",
-                "description": "",
+                "id": "One vegan main required",
+                "text": "One vegan main required",
                 "recommended": false
               },
               {
-                "label": "More than one vegan option",
-                "description": "",
+                "id": "More than one vegan option",
+                "text": "More than one vegan option",
                 "recommended": false
               },
               {
-                "label": "Not needed",
-                "description": "",
+                "id": "Not needed",
+                "text": "Not needed",
                 "recommended": false
               }
             ],
@@ -635,18 +635,18 @@
             "content": "No known allergies",
             "alternatives": [
               {
-                "label": "No known allergies",
-                "description": "",
+                "id": "No known allergies",
+                "text": "No known allergies",
                 "recommended": false
               },
               {
-                "label": "Need to check",
-                "description": "",
+                "id": "Need to check",
+                "text": "Need to check",
                 "recommended": false
               },
               {
-                "label": "Specific allergy requirements",
-                "description": "",
+                "id": "Specific allergy requirements",
+                "text": "Specific allergy requirements",
                 "recommended": false
               }
             ],
@@ -772,18 +772,18 @@
             "content": "Core four teammates",
             "alternatives": [
               {
-                "label": "Core four teammates",
-                "description": "",
+                "id": "Core four teammates",
+                "text": "Core four teammates",
                 "recommended": false
               },
               {
-                "label": "Whole 12-person team",
-                "description": "",
+                "id": "Whole 12-person team",
+                "text": "Whole 12-person team",
                 "recommended": false
               },
               {
-                "label": "Team and contractors",
-                "description": "",
+                "id": "Team and contractors",
+                "text": "Team and contractors",
                 "recommended": false
               }
             ],
@@ -797,18 +797,18 @@
             "content": "Sit-down lunch",
             "alternatives": [
               {
-                "label": "Sit-down lunch",
-                "description": "",
+                "id": "Sit-down lunch",
+                "text": "Sit-down lunch",
                 "recommended": false
               },
               {
-                "label": "Casual café",
-                "description": "",
+                "id": "Casual café",
+                "text": "Casual café",
                 "recommended": false
               },
               {
-                "label": "Takeaway together",
-                "description": "",
+                "id": "Takeaway together",
+                "text": "Takeaway together",
                 "recommended": false
               }
             ],
@@ -822,18 +822,18 @@
             "content": "€35 per person",
             "alternatives": [
               {
-                "label": "€25 per person",
-                "description": "",
+                "id": "€25 per person",
+                "text": "€25 per person",
                 "recommended": false
               },
               {
-                "label": "€35 per person",
-                "description": "",
+                "id": "€35 per person",
+                "text": "€35 per person",
                 "recommended": false
               },
               {
-                "label": "€50 per person",
-                "description": "",
+                "id": "€50 per person",
+                "text": "€50 per person",
                 "recommended": false
               }
             ],
@@ -847,18 +847,18 @@
             "content": "Four attendees",
             "alternatives": [
               {
-                "label": "Four people",
-                "description": "",
+                "id": "Four people",
+                "text": "Four attendees",
                 "recommended": false
               },
               {
-                "label": "Six people",
-                "description": "",
+                "id": "Six people",
+                "text": "Six people",
                 "recommended": false
               },
               {
-                "label": "Twelve people",
-                "description": "",
+                "id": "Twelve people",
+                "text": "Twelve people",
                 "recommended": false
               }
             ],
@@ -872,18 +872,18 @@
             "content": "One vegetarian · one vegan",
             "alternatives": [
               {
-                "label": "No restrictions",
-                "description": "",
+                "id": "No restrictions",
+                "text": "No restrictions",
                 "recommended": false
               },
               {
-                "label": "One vegetarian and one vegan",
-                "description": "",
+                "id": "One vegetarian and one vegan",
+                "text": "One vegetarian · one vegan",
                 "recommended": false
               },
               {
-                "label": "Still checking",
-                "description": "",
+                "id": "Still checking",
+                "text": "Still checking",
                 "recommended": false
               }
             ],
@@ -897,18 +897,18 @@
             "content": "Walkable café",
             "alternatives": [
               {
-                "label": "Walkable café",
-                "description": "",
+                "id": "Walkable café",
+                "text": "Walkable café",
                 "recommended": false
               },
               {
-                "label": "Italian restaurant",
-                "description": "",
+                "id": "Italian restaurant",
+                "text": "Italian restaurant",
                 "recommended": false
               },
               {
-                "label": "Takeaway near the office",
-                "description": "",
+                "id": "Takeaway near the office",
+                "text": "Takeaway near the office",
                 "recommended": false
               }
             ],
@@ -921,18 +921,18 @@
             "content": "€140 total",
             "alternatives": [
               {
-                "label": "€100 total",
-                "description": "",
+                "id": "€100 total",
+                "text": "€100 total",
                 "recommended": false
               },
               {
-                "label": "€140 total",
-                "description": "",
+                "id": "€140 total",
+                "text": "€140 total",
                 "recommended": false
               },
               {
-                "label": "€200 total",
-                "description": "",
+                "id": "€200 total",
+                "text": "€200 total",
                 "recommended": false
               }
             ],
@@ -946,18 +946,18 @@
             "content": "Include soft drinks",
             "alternatives": [
               {
-                "label": "Include soft drinks",
-                "description": "",
+                "id": "Include soft drinks",
+                "text": "Include soft drinks",
                 "recommended": false
               },
               {
-                "label": "Include all drinks",
-                "description": "",
+                "id": "Include all drinks",
+                "text": "Include all drinks",
                 "recommended": false
               },
               {
-                "label": "Food only",
-                "description": "",
+                "id": "Food only",
+                "text": "Food only",
                 "recommended": false
               }
             ],
@@ -971,18 +971,18 @@
             "content": "A substantial vegan main required",
             "alternatives": [
               {
-                "label": "One vegan main required",
-                "description": "",
+                "id": "One vegan main required",
+                "text": "A substantial vegan main required",
                 "recommended": false
               },
               {
-                "label": "More than one vegan option",
-                "description": "",
+                "id": "More than one vegan option",
+                "text": "More than one vegan option",
                 "recommended": false
               },
               {
-                "label": "Not needed",
-                "description": "",
+                "id": "Not needed",
+                "text": "Not needed",
                 "recommended": false
               }
             ],
@@ -996,18 +996,18 @@
             "content": "No known allergies",
             "alternatives": [
               {
-                "label": "No known allergies",
-                "description": "",
+                "id": "No known allergies",
+                "text": "No known allergies",
                 "recommended": false
               },
               {
-                "label": "Need to check",
-                "description": "",
+                "id": "Need to check",
+                "text": "Need to check",
                 "recommended": false
               },
               {
-                "label": "Specific allergy requirements",
-                "description": "",
+                "id": "Specific allergy requirements",
+                "text": "Specific allergy requirements",
                 "recommended": false
               }
             ],
@@ -1133,18 +1133,18 @@
             "content": "Core four teammates",
             "alternatives": [
               {
-                "label": "Core four teammates",
-                "description": "",
+                "id": "Core four teammates",
+                "text": "Core four teammates",
                 "recommended": false
               },
               {
-                "label": "Whole 12-person team",
-                "description": "",
+                "id": "Whole 12-person team",
+                "text": "Whole 12-person team",
                 "recommended": false
               },
               {
-                "label": "Team and contractors",
-                "description": "",
+                "id": "Team and contractors",
+                "text": "Team and contractors",
                 "recommended": false
               }
             ],
@@ -1158,18 +1158,18 @@
             "content": "Sit-down lunch",
             "alternatives": [
               {
-                "label": "Sit-down lunch",
-                "description": "",
+                "id": "Sit-down lunch",
+                "text": "Sit-down lunch",
                 "recommended": false
               },
               {
-                "label": "Casual café",
-                "description": "",
+                "id": "Casual café",
+                "text": "Casual café",
                 "recommended": false
               },
               {
-                "label": "Takeaway together",
-                "description": "",
+                "id": "Takeaway together",
+                "text": "Takeaway together",
                 "recommended": false
               }
             ],
@@ -1183,18 +1183,18 @@
             "content": "€35 per person",
             "alternatives": [
               {
-                "label": "€25 per person",
-                "description": "",
+                "id": "€25 per person",
+                "text": "€25 per person",
                 "recommended": false
               },
               {
-                "label": "€35 per person",
-                "description": "",
+                "id": "€35 per person",
+                "text": "€35 per person",
                 "recommended": false
               },
               {
-                "label": "€50 per person",
-                "description": "",
+                "id": "€50 per person",
+                "text": "€50 per person",
                 "recommended": false
               }
             ],
@@ -1208,18 +1208,18 @@
             "content": "Four attendees",
             "alternatives": [
               {
-                "label": "Four people",
-                "description": "",
+                "id": "Four people",
+                "text": "Four attendees",
                 "recommended": false
               },
               {
-                "label": "Six people",
-                "description": "",
+                "id": "Six people",
+                "text": "Six people",
                 "recommended": false
               },
               {
-                "label": "Twelve people",
-                "description": "",
+                "id": "Twelve people",
+                "text": "Twelve people",
                 "recommended": false
               }
             ],
@@ -1233,18 +1233,18 @@
             "content": "One vegetarian · one vegan",
             "alternatives": [
               {
-                "label": "No restrictions",
-                "description": "",
+                "id": "No restrictions",
+                "text": "No restrictions",
                 "recommended": false
               },
               {
-                "label": "One vegetarian and one vegan",
-                "description": "",
+                "id": "One vegetarian and one vegan",
+                "text": "One vegetarian · one vegan",
                 "recommended": false
               },
               {
-                "label": "Still checking",
-                "description": "",
+                "id": "Still checking",
+                "text": "Still checking",
                 "recommended": false
               }
             ],
@@ -1258,18 +1258,18 @@
             "content": "Italian restaurant",
             "alternatives": [
               {
-                "label": "Walkable café",
-                "description": "",
+                "id": "Walkable café",
+                "text": "Walkable café",
                 "recommended": false
               },
               {
-                "label": "Italian restaurant",
-                "description": "",
+                "id": "Italian restaurant",
+                "text": "Italian restaurant",
                 "recommended": false
               },
               {
-                "label": "Takeaway near the office",
-                "description": "",
+                "id": "Takeaway near the office",
+                "text": "Takeaway near the office",
                 "recommended": false
               }
             ],
@@ -1282,18 +1282,18 @@
             "content": "€140 total",
             "alternatives": [
               {
-                "label": "€100 total",
-                "description": "",
+                "id": "€100 total",
+                "text": "€100 total",
                 "recommended": false
               },
               {
-                "label": "€140 total",
-                "description": "",
+                "id": "€140 total",
+                "text": "€140 total",
                 "recommended": false
               },
               {
-                "label": "€200 total",
-                "description": "",
+                "id": "€200 total",
+                "text": "€200 total",
                 "recommended": false
               }
             ],
@@ -1307,18 +1307,18 @@
             "content": "Include soft drinks",
             "alternatives": [
               {
-                "label": "Include soft drinks",
-                "description": "",
+                "id": "Include soft drinks",
+                "text": "Include soft drinks",
                 "recommended": false
               },
               {
-                "label": "Include all drinks",
-                "description": "",
+                "id": "Include all drinks",
+                "text": "Include all drinks",
                 "recommended": false
               },
               {
-                "label": "Food only",
-                "description": "",
+                "id": "Food only",
+                "text": "Food only",
                 "recommended": false
               }
             ],
@@ -1332,18 +1332,18 @@
             "content": "A substantial vegan main required",
             "alternatives": [
               {
-                "label": "One vegan main required",
-                "description": "",
+                "id": "One vegan main required",
+                "text": "A substantial vegan main required",
                 "recommended": false
               },
               {
-                "label": "More than one vegan option",
-                "description": "",
+                "id": "More than one vegan option",
+                "text": "More than one vegan option",
                 "recommended": false
               },
               {
-                "label": "Not needed",
-                "description": "",
+                "id": "Not needed",
+                "text": "Not needed",
                 "recommended": false
               }
             ],
@@ -1357,18 +1357,18 @@
             "content": "No known allergies",
             "alternatives": [
               {
-                "label": "No known allergies",
-                "description": "",
+                "id": "No known allergies",
+                "text": "No known allergies",
                 "recommended": false
               },
               {
-                "label": "Need to check",
-                "description": "",
+                "id": "Need to check",
+                "text": "Need to check",
                 "recommended": false
               },
               {
-                "label": "Specific allergy requirements",
-                "description": "",
+                "id": "Specific allergy requirements",
+                "text": "Specific allergy requirements",
                 "recommended": false
               }
             ],
@@ -1382,18 +1382,18 @@
             "content": "Friday at noon",
             "alternatives": [
               {
-                "label": "Friday at noon",
-                "description": "",
+                "id": "Friday at noon",
+                "text": "Friday at noon",
                 "recommended": false
               },
               {
-                "label": "Another weekday",
-                "description": "",
+                "id": "Another weekday",
+                "text": "Another weekday",
                 "recommended": false
               },
               {
-                "label": "Still flexible",
-                "description": "",
+                "id": "Still flexible",
+                "text": "Still flexible",
                 "recommended": false
               }
             ],
@@ -1406,18 +1406,18 @@
             "content": "Yes, focus on Italian",
             "alternatives": [
               {
-                "label": "Yes, focus on Italian",
-                "description": "",
+                "id": "Yes, focus on Italian",
+                "text": "Yes, focus on Italian",
                 "recommended": false
               },
               {
-                "label": "Any place with vegan options",
-                "description": "",
+                "id": "Any place with vegan options",
+                "text": "Any place with vegan options",
                 "recommended": false
               },
               {
-                "label": "Prefer takeaway",
-                "description": "",
+                "id": "Prefer takeaway",
+                "text": "Prefer takeaway",
                 "recommended": false
               }
             ],
@@ -1555,23 +1555,23 @@
             "content": "Six teammates",
             "alternatives": [
               {
-                "label": "Core four teammates",
-                "description": "",
+                "id": "Core four teammates",
+                "text": "Core four teammates",
                 "recommended": false
               },
               {
-                "label": "Whole 12-person team",
-                "description": "",
+                "id": "Whole 12-person team",
+                "text": "Whole 12-person team",
                 "recommended": false
               },
               {
-                "label": "Team and contractors",
-                "description": "",
+                "id": "Team and contractors",
+                "text": "Team and contractors",
                 "recommended": false
               },
               {
-                "label": "Six teammates",
-                "description": "The revised group size.",
+                "id": "Six teammates",
+                "text": "Six teammates",
                 "recommended": false
               }
             ],
@@ -1585,18 +1585,18 @@
             "content": "Takeaway together",
             "alternatives": [
               {
-                "label": "Sit-down lunch",
-                "description": "",
+                "id": "Sit-down lunch",
+                "text": "Sit-down lunch",
                 "recommended": false
               },
               {
-                "label": "Casual café",
-                "description": "",
+                "id": "Casual café",
+                "text": "Casual café",
                 "recommended": false
               },
               {
-                "label": "Takeaway together",
-                "description": "",
+                "id": "Takeaway together",
+                "text": "Takeaway together",
                 "recommended": false
               }
             ],
@@ -1610,18 +1610,18 @@
             "content": "€25 per person",
             "alternatives": [
               {
-                "label": "€25 per person",
-                "description": "",
+                "id": "€25 per person",
+                "text": "€25 per person",
                 "recommended": false
               },
               {
-                "label": "€35 per person",
-                "description": "",
+                "id": "€35 per person",
+                "text": "€35 per person",
                 "recommended": false
               },
               {
-                "label": "€50 per person",
-                "description": "",
+                "id": "€50 per person",
+                "text": "€50 per person",
                 "recommended": false
               }
             ],
@@ -1635,18 +1635,18 @@
             "content": "Six attendees",
             "alternatives": [
               {
-                "label": "Four people",
-                "description": "",
+                "id": "Four people",
+                "text": "Four people",
                 "recommended": false
               },
               {
-                "label": "Six people",
-                "description": "",
+                "id": "Six people",
+                "text": "Six attendees",
                 "recommended": false
               },
               {
-                "label": "Twelve people",
-                "description": "",
+                "id": "Twelve people",
+                "text": "Twelve people",
                 "recommended": false
               }
             ],
@@ -1660,18 +1660,18 @@
             "content": "One vegetarian · one vegan",
             "alternatives": [
               {
-                "label": "No restrictions",
-                "description": "",
+                "id": "No restrictions",
+                "text": "No restrictions",
                 "recommended": false
               },
               {
-                "label": "One vegetarian and one vegan",
-                "description": "",
+                "id": "One vegetarian and one vegan",
+                "text": "One vegetarian · one vegan",
                 "recommended": false
               },
               {
-                "label": "Still checking",
-                "description": "",
+                "id": "Still checking",
+                "text": "Still checking",
                 "recommended": false
               }
             ],
@@ -1685,18 +1685,18 @@
             "content": "Takeaway near the office",
             "alternatives": [
               {
-                "label": "Walkable café",
-                "description": "",
+                "id": "Walkable café",
+                "text": "Walkable café",
                 "recommended": false
               },
               {
-                "label": "Italian restaurant",
-                "description": "",
+                "id": "Italian restaurant",
+                "text": "Italian restaurant",
                 "recommended": false
               },
               {
-                "label": "Takeaway near the office",
-                "description": "",
+                "id": "Takeaway near the office",
+                "text": "Takeaway near the office",
                 "recommended": false
               }
             ],
@@ -1709,18 +1709,18 @@
             "content": "€150 total",
             "alternatives": [
               {
-                "label": "€150 total",
-                "description": "",
+                "id": "€150 total",
+                "text": "€150 total",
                 "recommended": false
               },
               {
-                "label": "€210 total",
-                "description": "",
+                "id": "€210 total",
+                "text": "€210 total",
                 "recommended": false
               },
               {
-                "label": "€300 total",
-                "description": "",
+                "id": "€300 total",
+                "text": "€300 total",
                 "recommended": false
               }
             ],
@@ -1734,18 +1734,18 @@
             "content": "Include soft drinks",
             "alternatives": [
               {
-                "label": "Include soft drinks",
-                "description": "",
+                "id": "Include soft drinks",
+                "text": "Include soft drinks",
                 "recommended": false
               },
               {
-                "label": "Include all drinks",
-                "description": "",
+                "id": "Include all drinks",
+                "text": "Include all drinks",
                 "recommended": false
               },
               {
-                "label": "Food only",
-                "description": "",
+                "id": "Food only",
+                "text": "Food only",
                 "recommended": false
               }
             ],
@@ -1759,18 +1759,18 @@
             "content": "A substantial vegan main required",
             "alternatives": [
               {
-                "label": "One vegan main required",
-                "description": "",
+                "id": "One vegan main required",
+                "text": "A substantial vegan main required",
                 "recommended": false
               },
               {
-                "label": "More than one vegan option",
-                "description": "",
+                "id": "More than one vegan option",
+                "text": "More than one vegan option",
                 "recommended": false
               },
               {
-                "label": "Not needed",
-                "description": "",
+                "id": "Not needed",
+                "text": "Not needed",
                 "recommended": false
               }
             ],
@@ -1784,18 +1784,18 @@
             "content": "No known allergies",
             "alternatives": [
               {
-                "label": "No known allergies",
-                "description": "",
+                "id": "No known allergies",
+                "text": "No known allergies",
                 "recommended": false
               },
               {
-                "label": "Need to check",
-                "description": "",
+                "id": "Need to check",
+                "text": "Need to check",
                 "recommended": false
               },
               {
-                "label": "Specific allergy requirements",
-                "description": "",
+                "id": "Specific allergy requirements",
+                "text": "Specific allergy requirements",
                 "recommended": false
               }
             ],
@@ -1809,18 +1809,18 @@
             "content": "Friday at noon",
             "alternatives": [
               {
-                "label": "Friday at noon",
-                "description": "",
+                "id": "Friday at noon",
+                "text": "Friday at noon",
                 "recommended": false
               },
               {
-                "label": "Another weekday",
-                "description": "",
+                "id": "Another weekday",
+                "text": "Another weekday",
                 "recommended": false
               },
               {
-                "label": "Still flexible",
-                "description": "",
+                "id": "Still flexible",
+                "text": "Still flexible",
                 "recommended": false
               }
             ],
@@ -1833,13 +1833,13 @@
             "content": "Walkable collection",
             "alternatives": [
               {
-                "label": "Walkable collection",
-                "description": "Provisional starting point; not confirmed.",
+                "id": "Walkable collection",
+                "text": "Walkable collection",
                 "recommended": false
               },
               {
-                "label": "Need to discuss",
-                "description": "Keep the detail open.",
+                "id": "Need to discuss",
+                "text": "Keep the detail open.",
                 "recommended": false
               }
             ],
@@ -1981,23 +1981,23 @@
             "content": "Whole 12-person team",
             "alternatives": [
               {
-                "label": "Core four teammates",
-                "description": "",
+                "id": "Core four teammates",
+                "text": "Core four teammates",
                 "recommended": false
               },
               {
-                "label": "Whole 12-person team",
-                "description": "",
+                "id": "Whole 12-person team",
+                "text": "Whole 12-person team",
                 "recommended": false
               },
               {
-                "label": "Team and contractors",
-                "description": "",
+                "id": "Team and contractors",
+                "text": "Team and contractors",
                 "recommended": false
               },
               {
-                "label": "Six teammates",
-                "description": "The revised group size.",
+                "id": "Six teammates",
+                "text": "The revised group size.",
                 "recommended": false
               }
             ],
@@ -2011,18 +2011,18 @@
             "content": "Takeaway together",
             "alternatives": [
               {
-                "label": "Sit-down lunch",
-                "description": "",
+                "id": "Sit-down lunch",
+                "text": "Sit-down lunch",
                 "recommended": false
               },
               {
-                "label": "Casual café",
-                "description": "",
+                "id": "Casual café",
+                "text": "Casual café",
                 "recommended": false
               },
               {
-                "label": "Takeaway together",
-                "description": "",
+                "id": "Takeaway together",
+                "text": "Takeaway together",
                 "recommended": false
               }
             ],
@@ -2036,18 +2036,18 @@
             "content": "€25 per person",
             "alternatives": [
               {
-                "label": "€25 per person",
-                "description": "",
+                "id": "€25 per person",
+                "text": "€25 per person",
                 "recommended": false
               },
               {
-                "label": "€35 per person",
-                "description": "",
+                "id": "€35 per person",
+                "text": "€35 per person",
                 "recommended": false
               },
               {
-                "label": "€50 per person",
-                "description": "",
+                "id": "€50 per person",
+                "text": "€50 per person",
                 "recommended": false
               }
             ],
@@ -2061,18 +2061,18 @@
             "content": "Twelve attendees",
             "alternatives": [
               {
-                "label": "Four people",
-                "description": "",
+                "id": "Four people",
+                "text": "Four people",
                 "recommended": false
               },
               {
-                "label": "Six people",
-                "description": "",
+                "id": "Six people",
+                "text": "Six people",
                 "recommended": false
               },
               {
-                "label": "Twelve people",
-                "description": "",
+                "id": "Twelve people",
+                "text": "Twelve attendees",
                 "recommended": false
               }
             ],
@@ -2086,18 +2086,18 @@
             "content": "One vegetarian · one vegan",
             "alternatives": [
               {
-                "label": "No restrictions",
-                "description": "",
+                "id": "No restrictions",
+                "text": "No restrictions",
                 "recommended": false
               },
               {
-                "label": "One vegetarian and one vegan",
-                "description": "",
+                "id": "One vegetarian and one vegan",
+                "text": "One vegetarian · one vegan",
                 "recommended": false
               },
               {
-                "label": "Still checking",
-                "description": "",
+                "id": "Still checking",
+                "text": "Still checking",
                 "recommended": false
               }
             ],
@@ -2111,18 +2111,18 @@
             "content": "Takeaway near the office",
             "alternatives": [
               {
-                "label": "Walkable café",
-                "description": "",
+                "id": "Walkable café",
+                "text": "Walkable café",
                 "recommended": false
               },
               {
-                "label": "Italian restaurant",
-                "description": "",
+                "id": "Italian restaurant",
+                "text": "Italian restaurant",
                 "recommended": false
               },
               {
-                "label": "Takeaway near the office",
-                "description": "",
+                "id": "Takeaway near the office",
+                "text": "Takeaway near the office",
                 "recommended": false
               }
             ],
@@ -2135,18 +2135,18 @@
             "content": "€300 total",
             "alternatives": [
               {
-                "label": "€300 total",
-                "description": "",
+                "id": "€300 total",
+                "text": "€300 total",
                 "recommended": false
               },
               {
-                "label": "€420 total",
-                "description": "",
+                "id": "€420 total",
+                "text": "€420 total",
                 "recommended": false
               },
               {
-                "label": "€600 total",
-                "description": "",
+                "id": "€600 total",
+                "text": "€600 total",
                 "recommended": false
               }
             ],
@@ -2160,18 +2160,18 @@
             "content": "Include soft drinks",
             "alternatives": [
               {
-                "label": "Include soft drinks",
-                "description": "",
+                "id": "Include soft drinks",
+                "text": "Include soft drinks",
                 "recommended": false
               },
               {
-                "label": "Include all drinks",
-                "description": "",
+                "id": "Include all drinks",
+                "text": "Include all drinks",
                 "recommended": false
               },
               {
-                "label": "Food only",
-                "description": "",
+                "id": "Food only",
+                "text": "Food only",
                 "recommended": false
               }
             ],
@@ -2185,18 +2185,18 @@
             "content": "A substantial vegan main required",
             "alternatives": [
               {
-                "label": "One vegan main required",
-                "description": "",
+                "id": "One vegan main required",
+                "text": "A substantial vegan main required",
                 "recommended": false
               },
               {
-                "label": "More than one vegan option",
-                "description": "",
+                "id": "More than one vegan option",
+                "text": "More than one vegan option",
                 "recommended": false
               },
               {
-                "label": "Not needed",
-                "description": "",
+                "id": "Not needed",
+                "text": "Not needed",
                 "recommended": false
               }
             ],
@@ -2210,18 +2210,18 @@
             "content": "No known allergies",
             "alternatives": [
               {
-                "label": "No known allergies",
-                "description": "",
+                "id": "No known allergies",
+                "text": "No known allergies",
                 "recommended": false
               },
               {
-                "label": "Need to check",
-                "description": "",
+                "id": "Need to check",
+                "text": "Need to check",
                 "recommended": false
               },
               {
-                "label": "Specific allergy requirements",
-                "description": "",
+                "id": "Specific allergy requirements",
+                "text": "Specific allergy requirements",
                 "recommended": false
               }
             ],
@@ -2235,18 +2235,18 @@
             "content": "Friday at noon",
             "alternatives": [
               {
-                "label": "Friday at noon",
-                "description": "",
+                "id": "Friday at noon",
+                "text": "Friday at noon",
                 "recommended": false
               },
               {
-                "label": "Another weekday",
-                "description": "",
+                "id": "Another weekday",
+                "text": "Another weekday",
                 "recommended": false
               },
               {
-                "label": "Still flexible",
-                "description": "",
+                "id": "Still flexible",
+                "text": "Still flexible",
                 "recommended": false
               }
             ],
@@ -2259,13 +2259,13 @@
             "content": "Walkable collection",
             "alternatives": [
               {
-                "label": "Walkable collection",
-                "description": "Provisional starting point; not confirmed.",
+                "id": "Walkable collection",
+                "text": "Walkable collection",
                 "recommended": false
               },
               {
-                "label": "Need to discuss",
-                "description": "Keep the detail open.",
+                "id": "Need to discuss",
+                "text": "Keep the detail open.",
                 "recommended": false
               }
             ],
@@ -2407,23 +2407,23 @@
             "content": "Whole 12-person team",
             "alternatives": [
               {
-                "label": "Core four teammates",
-                "description": "",
+                "id": "Core four teammates",
+                "text": "Core four teammates",
                 "recommended": false
               },
               {
-                "label": "Whole 12-person team",
-                "description": "",
+                "id": "Whole 12-person team",
+                "text": "Whole 12-person team",
                 "recommended": false
               },
               {
-                "label": "Team and contractors",
-                "description": "",
+                "id": "Team and contractors",
+                "text": "Team and contractors",
                 "recommended": false
               },
               {
-                "label": "Six teammates",
-                "description": "The revised group size.",
+                "id": "Six teammates",
+                "text": "The revised group size.",
                 "recommended": false
               }
             ],
@@ -2437,18 +2437,18 @@
             "content": "Takeaway together",
             "alternatives": [
               {
-                "label": "Sit-down lunch",
-                "description": "",
+                "id": "Sit-down lunch",
+                "text": "Sit-down lunch",
                 "recommended": false
               },
               {
-                "label": "Casual café",
-                "description": "",
+                "id": "Casual café",
+                "text": "Casual café",
                 "recommended": false
               },
               {
-                "label": "Takeaway together",
-                "description": "",
+                "id": "Takeaway together",
+                "text": "Takeaway together",
                 "recommended": false
               }
             ],
@@ -2462,18 +2462,18 @@
             "content": "€25 per person",
             "alternatives": [
               {
-                "label": "€25 per person",
-                "description": "",
+                "id": "€25 per person",
+                "text": "€25 per person",
                 "recommended": false
               },
               {
-                "label": "€35 per person",
-                "description": "",
+                "id": "€35 per person",
+                "text": "€35 per person",
                 "recommended": false
               },
               {
-                "label": "€50 per person",
-                "description": "",
+                "id": "€50 per person",
+                "text": "€50 per person",
                 "recommended": false
               }
             ],
@@ -2487,18 +2487,18 @@
             "content": "Twelve attendees",
             "alternatives": [
               {
-                "label": "Four people",
-                "description": "",
+                "id": "Four people",
+                "text": "Four people",
                 "recommended": false
               },
               {
-                "label": "Six people",
-                "description": "",
+                "id": "Six people",
+                "text": "Six people",
                 "recommended": false
               },
               {
-                "label": "Twelve people",
-                "description": "",
+                "id": "Twelve people",
+                "text": "Twelve attendees",
                 "recommended": false
               }
             ],
@@ -2512,23 +2512,23 @@
             "content": "One vegetarian · one vegan",
             "alternatives": [
               {
-                "label": "No restrictions",
-                "description": "",
+                "id": "No restrictions",
+                "text": "No restrictions",
                 "recommended": false
               },
               {
-                "label": "One vegetarian and one vegan",
-                "description": "",
+                "id": "One vegetarian and one vegan",
+                "text": "One vegetarian · one vegan",
                 "recommended": false
               },
               {
-                "label": "Still checking",
-                "description": "",
+                "id": "Still checking",
+                "text": "Still checking",
                 "recommended": false
               },
               {
-                "label": "All twelve vegan",
-                "description": "Every meal must be vegan.",
+                "id": "All twelve vegan",
+                "text": "Every meal must be vegan.",
                 "recommended": false
               }
             ],
@@ -2542,23 +2542,23 @@
             "content": "Takeaway near the office",
             "alternatives": [
               {
-                "label": "Walkable café",
-                "description": "",
+                "id": "Walkable café",
+                "text": "Walkable café",
                 "recommended": false
               },
               {
-                "label": "Italian restaurant",
-                "description": "",
+                "id": "Italian restaurant",
+                "text": "Italian restaurant",
                 "recommended": false
               },
               {
-                "label": "Takeaway near the office",
-                "description": "",
+                "id": "Takeaway near the office",
+                "text": "Takeaway near the office",
                 "recommended": false
               },
               {
-                "label": "Steakhouse without vegan meals",
-                "description": "Unsuitable when vegan meals are required.",
+                "id": "Steakhouse without vegan meals",
+                "text": "Unsuitable when vegan meals are required.",
                 "recommended": false
               }
             ],
@@ -2572,18 +2572,18 @@
             "content": "€300 total",
             "alternatives": [
               {
-                "label": "€300 total",
-                "description": "",
+                "id": "€300 total",
+                "text": "€300 total",
                 "recommended": false
               },
               {
-                "label": "€420 total",
-                "description": "",
+                "id": "€420 total",
+                "text": "€420 total",
                 "recommended": false
               },
               {
-                "label": "€600 total",
-                "description": "",
+                "id": "€600 total",
+                "text": "€600 total",
                 "recommended": false
               }
             ],
@@ -2597,18 +2597,18 @@
             "content": "Include soft drinks",
             "alternatives": [
               {
-                "label": "Include soft drinks",
-                "description": "",
+                "id": "Include soft drinks",
+                "text": "Include soft drinks",
                 "recommended": false
               },
               {
-                "label": "Include all drinks",
-                "description": "",
+                "id": "Include all drinks",
+                "text": "Include all drinks",
                 "recommended": false
               },
               {
-                "label": "Food only",
-                "description": "",
+                "id": "Food only",
+                "text": "Food only",
                 "recommended": false
               }
             ],
@@ -2622,18 +2622,18 @@
             "content": "A substantial vegan main required",
             "alternatives": [
               {
-                "label": "One vegan main required",
-                "description": "",
+                "id": "One vegan main required",
+                "text": "A substantial vegan main required",
                 "recommended": false
               },
               {
-                "label": "More than one vegan option",
-                "description": "",
+                "id": "More than one vegan option",
+                "text": "More than one vegan option",
                 "recommended": false
               },
               {
-                "label": "Not needed",
-                "description": "",
+                "id": "Not needed",
+                "text": "Not needed",
                 "recommended": false
               }
             ],
@@ -2647,18 +2647,18 @@
             "content": "No known allergies",
             "alternatives": [
               {
-                "label": "No known allergies",
-                "description": "",
+                "id": "No known allergies",
+                "text": "No known allergies",
                 "recommended": false
               },
               {
-                "label": "Need to check",
-                "description": "",
+                "id": "Need to check",
+                "text": "Need to check",
                 "recommended": false
               },
               {
-                "label": "Specific allergy requirements",
-                "description": "",
+                "id": "Specific allergy requirements",
+                "text": "Specific allergy requirements",
                 "recommended": false
               }
             ],
@@ -2672,18 +2672,18 @@
             "content": "Friday at noon",
             "alternatives": [
               {
-                "label": "Friday at noon",
-                "description": "",
+                "id": "Friday at noon",
+                "text": "Friday at noon",
                 "recommended": false
               },
               {
-                "label": "Another weekday",
-                "description": "",
+                "id": "Another weekday",
+                "text": "Another weekday",
                 "recommended": false
               },
               {
-                "label": "Still flexible",
-                "description": "",
+                "id": "Still flexible",
+                "text": "Still flexible",
                 "recommended": false
               }
             ],
@@ -2697,13 +2697,13 @@
             "content": "Walkable collection",
             "alternatives": [
               {
-                "label": "Walkable collection",
-                "description": "Provisional starting point; not confirmed.",
+                "id": "Walkable collection",
+                "text": "Walkable collection",
                 "recommended": false
               },
               {
-                "label": "Need to discuss",
-                "description": "Keep the detail open.",
+                "id": "Need to discuss",
+                "text": "Keep the detail open.",
                 "recommended": false
               }
             ],
@@ -2717,18 +2717,18 @@
             "content": "Office common room",
             "alternatives": [
               {
-                "label": "Office common room",
-                "description": "",
+                "id": "Office common room",
+                "text": "Office common room",
                 "recommended": false
               },
               {
-                "label": "Nearby park",
-                "description": "",
+                "id": "Nearby park",
+                "text": "Nearby park",
                 "recommended": false
               },
               {
-                "label": "At the venue",
-                "description": "",
+                "id": "At the venue",
+                "text": "At the venue",
                 "recommended": false
               }
             ],
@@ -2742,18 +2742,18 @@
             "content": "Space for twelve",
             "alternatives": [
               {
-                "label": "Space for twelve",
-                "description": "",
+                "id": "Space for twelve",
+                "text": "Space for twelve",
                 "recommended": false
               },
               {
-                "label": "Split into two groups",
-                "description": "",
+                "id": "Split into two groups",
+                "text": "Split into two groups",
                 "recommended": false
               },
               {
-                "label": "Use another location",
-                "description": "",
+                "id": "Use another location",
+                "text": "Use another location",
                 "recommended": false
               }
             ],
@@ -2767,18 +2767,18 @@
             "content": "Thursday afternoon",
             "alternatives": [
               {
-                "label": "Thursday afternoon",
-                "description": "",
+                "id": "Thursday afternoon",
+                "text": "Thursday afternoon",
                 "recommended": false
               },
               {
-                "label": "Friday morning",
-                "description": "",
+                "id": "Friday morning",
+                "text": "Friday morning",
                 "recommended": false
               },
               {
-                "label": "Order on arrival",
-                "description": "",
+                "id": "Order on arrival",
+                "text": "Order on arrival",
                 "recommended": false
               }
             ],
@@ -2792,13 +2792,13 @@
             "content": "One team payment",
             "alternatives": [
               {
-                "label": "One team payment",
-                "description": "",
+                "id": "One team payment",
+                "text": "One team payment",
                 "recommended": false
               },
               {
-                "label": "Everyone pays separately",
-                "description": "",
+                "id": "Everyone pays separately",
+                "text": "Everyone pays separately",
                 "recommended": false
               }
             ],
@@ -2811,18 +2811,18 @@
             "content": "Walk together",
             "alternatives": [
               {
-                "label": "Walk together",
-                "description": "",
+                "id": "Walk together",
+                "text": "Walk together",
                 "recommended": false
               },
               {
-                "label": "One person collects",
-                "description": "",
+                "id": "One person collects",
+                "text": "One person collects",
                 "recommended": false
               },
               {
-                "label": "Delivery",
-                "description": "",
+                "id": "Delivery",
+                "text": "Delivery",
                 "recommended": false
               }
             ],

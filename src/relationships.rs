@@ -11,7 +11,7 @@ pub struct Participant {
     /// ID of a node in this complete graph. Each constraint names a node at most once.
     #[schemars(length(min = 1, max = 64), regex(pattern = r"^[A-Za-z0-9_-]+$"))]
     pub node_id: String,
-    /// Scope this rule to one exact alternatives[].label on the participant; omit to cover the whole node.
+    /// Scope this rule to one exact alternatives[].id on the participant; omit to cover the whole node.
     #[serde(
         default,
         skip_serializing_if = "Option::is_none",

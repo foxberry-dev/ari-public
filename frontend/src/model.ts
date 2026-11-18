@@ -48,6 +48,15 @@ export function nodeContent(node: GraphNode): string {
   return node.content;
 }
 
+export function optionText(node: GraphNode, option: Alternative): string {
+  return option.label === selectedAlternative(node) && node.content ? node.content : option.description || option.label;
+}
+
 export function nodeStatus(node: GraphNode): string {
   return node.kind === 'assumption' ? 'Assumption' : node.kind === 'decided' ? 'Decided' : node.kind === 'topic' ? 'Topic' : node.kind === 'forecast' ? 'Historical forecast' : 'Historical question';
+}
+
+export function unselectedAlternatives(node: GraphNode): Alternative[] {
+  const choice = selectedAlternative(node);
+  return node.alternatives.filter(option => option.label !== choice);
 }

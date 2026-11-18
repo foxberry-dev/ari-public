@@ -27,13 +27,13 @@
             "content": "Office common room",
             "alternatives": [
               {
-                "label": "Office common room",
-                "description": "",
+                "id": "Office common room",
+                "text": "Office common room",
                 "recommended": false
               },
               {
-                "label": "Nearby park",
-                "description": "",
+                "id": "Nearby park",
+                "text": "Nearby park",
                 "recommended": false
               }
             ],
@@ -46,13 +46,13 @@
             "content": "€25 per person",
             "alternatives": [
               {
-                "label": "€25 per person",
-                "description": "",
+                "id": "€25 per person",
+                "text": "€25 per person",
                 "recommended": false
               },
               {
-                "label": "€30 per person",
-                "description": "",
+                "id": "€30 per person",
+                "text": "€30 per person",
                 "recommended": false
               }
             ],
@@ -65,13 +65,13 @@
             "content": "Keep a restaurant reservation",
             "alternatives": [
               {
-                "label": "Keep a restaurant reservation",
-                "description": "",
+                "id": "Keep a restaurant reservation",
+                "text": "Keep a restaurant reservation",
                 "recommended": false
               },
               {
-                "label": "No reservation",
-                "description": "",
+                "id": "No reservation",
+                "text": "No reservation",
                 "recommended": false
               }
             ],
@@ -84,13 +84,13 @@
             "content": "Include soft drinks",
             "alternatives": [
               {
-                "label": "Include soft drinks",
-                "description": "",
+                "id": "Include soft drinks",
+                "text": "Include soft drinks",
                 "recommended": false
               },
               {
-                "label": "Bring our own drinks",
-                "description": "",
+                "id": "Bring our own drinks",
+                "text": "Bring our own drinks",
                 "recommended": false
               }
             ],
@@ -159,13 +159,13 @@
             "content": "Office common room",
             "alternatives": [
               {
-                "label": "Office common room",
-                "description": "",
+                "id": "Office common room",
+                "text": "Office common room",
                 "recommended": false
               },
               {
-                "label": "Nearby park",
-                "description": "",
+                "id": "Nearby park",
+                "text": "Nearby park",
                 "recommended": false
               }
             ],
@@ -178,13 +178,13 @@
             "content": "€30 per person",
             "alternatives": [
               {
-                "label": "€25 per person",
-                "description": "",
+                "id": "€25 per person",
+                "text": "€25 per person",
                 "recommended": false
               },
               {
-                "label": "€30 per person",
-                "description": "",
+                "id": "€30 per person",
+                "text": "€30 per person",
                 "recommended": false
               }
             ],
@@ -197,13 +197,13 @@
             "content": "Include soft drinks",
             "alternatives": [
               {
-                "label": "Include soft drinks",
-                "description": "",
+                "id": "Include soft drinks",
+                "text": "Include soft drinks",
                 "recommended": false
               },
               {
-                "label": "Bring our own drinks",
-                "description": "",
+                "id": "Bring our own drinks",
+                "text": "Bring our own drinks",
                 "recommended": false
               }
             ],
@@ -224,13 +224,13 @@
             "content": "Walk together",
             "alternatives": [
               {
-                "label": "Walk together",
-                "description": "",
+                "id": "Walk together",
+                "text": "Walk together",
                 "recommended": false
               },
               {
-                "label": "Use a cargo bike",
-                "description": "",
+                "id": "Use a cargo bike",
+                "text": "Use a cargo bike",
                 "recommended": false
               }
             ],
