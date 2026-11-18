@@ -303,12 +303,12 @@ impl PublicationGraph {
             }
             if let Some(option) =
                 selected.and_then(|id| alternatives.iter().find(|option| option.id == id))
+                && !content.is_empty()
+                && content != &option.text
             {
-                if !content.is_empty() && content != &option.text {
-                    return Err(format!(
-                        "graph.nodes[{index}].content: omit when selectedAlternative supplies the answer, or use exactly its text"
-                    ));
-                }
+                return Err(format!(
+                    "graph.nodes[{index}].content: omit when selectedAlternative supplies the answer, or use exactly its text"
+                ));
             }
         }
         validate_graph(&self.clone().into()).map_err(|error| {
