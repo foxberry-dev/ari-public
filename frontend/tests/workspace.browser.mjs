@@ -651,8 +651,8 @@ test('clarification header and quick reference match the Esi gallery treatment',
   await page.keyboard.press('?'); await help.waitFor();
   await page.keyboard.press('?'); await help.waitFor({ state: 'hidden' });
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForFunction(() => document.documentElement.scrollWidth <= innerWidth);
   assert.equal((await back.locator('svg').boundingBox()).x, 8);
-  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   await page.keyboard.press('?'); await help.waitFor();
   assert.ok((await help.boundingBox()).width <= 358);
   await page.getByRole('button', { name: 'Done', exact: true }).click();
