@@ -77,7 +77,7 @@ function down(event: PointerEvent) {
 <style scoped>
 .viewport-tools{position:absolute;right:16px;bottom:16px;z-index:3;display:grid;justify-items:end;max-width:calc(100% - 32px);gap:8px;pointer-events:none;--diagram-accent:#7bc8c4}
 .diagram-minimap,.viewport-buttons{pointer-events:auto}
-.viewport-dock{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px;min-width:0}
+.viewport-dock{display:flex;align-items:flex-end;justify-content:flex-end;flex-wrap:wrap;gap:8px;min-width:0}
 .viewport-tools.compact{left:16px}
 .compact .viewport-dock{width:100%}
 .compact :deep(.selection-actions){margin-right:auto}
@@ -95,5 +95,6 @@ function down(event: PointerEvent) {
 .viewport-buttons button[aria-pressed="true"]{color:var(--diagram-accent);background:color-mix(in srgb,var(--diagram-accent) 12%,transparent)}
 .viewport-buttons .multi-select-toggle[aria-pressed="true"]{color:var(--accent);background:#e6b85c20}
 .viewport-buttons button:disabled{opacity:.4;cursor:default}.viewport-buttons .actual-size{font-size:.75rem;font-weight:600}.viewport-buttons output{min-width:46px;text-align:center;font-size:.75rem;color:var(--muted);font-variant-numeric:tabular-nums}
-@media(max-width:700px){.viewport-tools{right:10px;bottom:10px;max-width:calc(100% - 20px);gap:6px}.viewport-tools.compact{left:10px}.diagram-minimap{height:80px}.viewport-buttons button,.viewport-buttons :deep(> button){width:30px;height:30px}}
+@media(max-width:700px){.viewport-tools{right:10px;bottom:10px;max-width:calc(100% - 20px);gap:6px}.viewport-tools.compact{left:10px}.diagram-minimap{height:80px}.viewport-buttons button,.viewport-buttons :deep(> button){width:30px;height:30px}.viewport-buttons output{min-width:32px}}
+@media(max-width:350px){.viewport-dock{gap:6px}.viewport-buttons{gap:0}.viewport-dock:has(.selection-actions) .viewport-buttons output{display:none}}
 </style>

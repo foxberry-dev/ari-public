@@ -1951,7 +1951,7 @@ for (const layoutName of ['Tree', 'Grouped', 'Radial']) test(`${layoutName} togg
   assert.deepEqual(await selection(), toggled, 'A reverse-direction box toggles both selected and unselected cards');
   await page.getByRole('button', { name: layoutName === 'Tree' ? 'Grouped' : 'Tree', exact: true }).click();
   assert.deepEqual(new Set(await selection()), new Set(toggled), 'Selection survives layout changes');
-  await page.getByRole('button', { name: 'Clear node selection', exact: true }).click();
+  await page.keyboard.press('Escape');
   assert.deepEqual(await selection(), []);
   await page.getByRole('toolbar', { name: 'Selected node actions' }).waitFor({ state: 'detached' });
   await card(ids[0]).click();
@@ -2077,7 +2077,7 @@ test('mobile multi-select toggles nodes by touch, preserves mode while panning, 
     await touch('touchStart', [{ id: ++pointer, x: node.x + node.width / 2, y: node.y + node.height / 2 }]);
     await touch('touchEnd', []);
   }
-  for (const width of [320, 390, 825]) {
+  for (const width of [320, 360, 390, 825]) {
     await page.setViewportSize({ width, height: 1000 });
     await page.getByRole('button', { name: 'Fit graph', exact: true }).click();
     await mode.click();
@@ -2118,10 +2118,8 @@ test('mobile multi-select toggles nodes by touch, preserves mode while panning, 
     assert.ok(Math.abs(pill.x - inset) < 1, 'Selection pill aligns to the left canvas inset');
     assert.ok(Math.abs(controls.x + controls.width - width + inset) < 1, 'Canvas controls align to the right inset');
     assert.ok(controls.x >= 0 && controls.x + controls.width <= width);
-    if (pill.width + controls.width + 8 <= width - inset * 2) {
-      assert.ok(pill.x + pill.width <= controls.x, 'Pill sits to the left of the controls when both fit');
-      assert.ok(Math.abs(pill.y + pill.height / 2 - controls.y - controls.height / 2) < 1, 'Pill aligns with the controls');
-    } else assert.ok(pill.y + pill.height <= controls.y, 'The pill wraps above the controls when needed');
+    assert.ok(pill.x + pill.width <= controls.x, 'Selection pill sits beside the canvas controls');
+    assert.ok(Math.abs(pill.y + pill.height - controls.y - controls.height) < 1, 'Pill bottom aligns with the controls');
     const viewport = await page.locator('.graph-viewport').boundingBox();
     const point = { id: ++pointer, x: viewport.x + 16, y: viewport.y + 20 };
     const before = await graphCamera(page);
@@ -2722,8 +2720,8 @@ for (const width of [1600, 390]) test(`selection shortcuts copy scoped agent req
   assert.ok(rows.slice(1).every((row, index) => row.top - rows[index].bottom >= 3.5), 'Focused and hovered rows have separate surfaces');
   const box = await menu.boundingBox();
   assert.ok(box.x >= 11 && box.x + box.width <= width - 11);
-  const button = await trigger.boundingBox(), label = await trigger.locator('span').boundingBox();
-  assert.ok(label.x + label.width <= button.x + button.width + 1, 'The Shortcuts label fits its mobile pill button');
+  if (width <= 1100) assert.equal(await trigger.locator('span').isVisible(), false, 'Mobile shortcuts use an icon with an accessible name');
+  else assert.equal(await trigger.locator('span').isVisible(), true);
   await page.keyboard.press('j');
   assert.equal(await menu.getByRole('menuitem', { name: /^Add assumptions/ }).evaluate(el => el === document.activeElement), true);
   assert.equal(await page.locator('[aria-current="step"]').getAttribute('aria-label'), currentRevision);

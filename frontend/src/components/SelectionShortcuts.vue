@@ -70,5 +70,6 @@ defineExpose({ toggle, handleKey });
 .selection-shortcuts-menu button:hover:not(:disabled),.selection-shortcuts-menu button:focus-visible{outline:none;background:#35383b}
 .selection-shortcuts-menu button:disabled{opacity:.4;cursor:default}
 .action-label{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}.shortcut-count{color:var(--accent);font:11px ui-monospace,monospace}.action-description{display:block;margin-top:3px;font-size:11px;color:var(--muted)}
+@media(max-width:1100px){.selection-shortcuts-trigger>span{display:none}}
 @media(max-width:700px){.selection-shortcuts-trigger{min-height:30px;padding:6px 8px;font-size:12px;gap:5px}}
 </style>

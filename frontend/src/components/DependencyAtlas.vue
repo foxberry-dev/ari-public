@@ -607,7 +607,6 @@ onUnmounted(() => {
               <span role="status" :aria-label="`${selectedIds.size} selected`">{{ selectedIds.size }}<span class="selection-caption"> selected</span></span>
               <button aria-label="Copy selected node references" :disabled="!selectedIds.size" @click="copySelection"><i class="pi pi-copy" aria-hidden="true"/><span class="selection-caption">Copy</span></button>
               <SelectionShortcuts ref="selectionShortcuts" :context="shortcutContext" @copy="copyShortcutRequest"/>
-              <button aria-label="Clear node selection" @click="clearSelection"><i class="pi pi-times" aria-hidden="true"/></button>
             </div>
           </Transition>
         </template>
@@ -641,7 +640,8 @@ onUnmounted(() => {
 .selection-actions button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .selection-actions-enter-active,.selection-actions-leave-active{transition:transform .22s ease,opacity .22s ease}
 .selection-actions-enter-from,.selection-actions-leave-to{transform:translateY(24px);opacity:0}
-@media(max-width:700px){.selection-actions :deep(.selection-shortcuts-trigger){width:auto;padding:6px 8px}.selection-actions{gap:4px;padding:3px 6px 3px 10px}.selection-caption{display:none}.selection-actions button{width:30px;min-height:30px;padding:6px}}
+@media(max-width:700px){.selection-actions :deep(.selection-shortcuts-trigger){width:30px;padding:6px}.selection-actions{gap:4px;padding:3px 4px 3px 8px}.selection-actions>span{padding-right:4px}.selection-caption{display:none}.selection-actions button{width:30px;min-height:30px;padding:6px}}
+@media(max-width:350px){.selection-actions{gap:2px}}
 @media(prefers-reduced-motion:reduce){.selection-actions-enter-active,.selection-actions-leave-active{transition:none}}
 .graph-node.options-open{border-bottom-left-radius:0;border-bottom-right-radius:0;box-shadow:0 12px 30px #0007}
 .node-frame:has(.options-open){z-index:5}
